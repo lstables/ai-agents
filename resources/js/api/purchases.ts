@@ -1,4 +1,5 @@
 import { apiRequest } from './client';
+import { fetchAllSuppliers } from './suppliers';
 import type { NewPurchaseInput, PaginatedResponse, Purchase, PurchaseFilters, Supplier } from '../types/purchases';
 
 function buildQuery(filters: PurchaseFilters): string {
@@ -43,5 +44,5 @@ export function createPurchase(input: NewPurchaseInput): Promise<{ data: Purchas
 }
 
 export function fetchSuppliers(): Promise<{ data: Supplier[] }> {
-    return apiRequest<{ data: Supplier[] }>('/api/suppliers');
+    return fetchAllSuppliers();
 }
