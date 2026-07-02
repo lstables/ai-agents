@@ -1,0 +1,51 @@
+name: ERP Feature
+description: Request a new ERP feature for the AI delivery workflow.
+title: "[Feature]: "
+labels:
+  - feature
+  - ai-ready
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Business problem
+      description: What ERP workflow or operational issue should this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: rules
+    attributes:
+      label: Business rules
+      description: List the rules the system must enforce.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Use checklist items where possible.
+      value: |
+        - [ ] 
+    validations:
+      required: true
+  - type: textarea
+    id: permissions
+    attributes:
+      label: Permissions and roles
+      description: Which users can view, create, update, approve, or override this feature?
+    validations:
+      required: true
+  - type: textarea
+    id: data
+    attributes:
+      label: Data and reporting impact
+      description: New fields, migrations, reports, exports, or audit requirements.
+    validations:
+      required: false
+  - type: textarea
+    id: rollout
+    attributes:
+      label: Rollout risk
+      description: Migration, support, training, or operational concerns.
+    validations:
+      required: false

@@ -1,0 +1,6 @@
+# Keep human ownership explicit. Replace these handles with your team.
+* @human-business-owner @human-technical-lead @human-qa-ops
+
+.ai/ @human-technical-lead
+.github/ @human-technical-lead
+database/migrations/ @human-technical-lead
