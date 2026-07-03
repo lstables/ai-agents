@@ -4,6 +4,9 @@ import { createSupplier, updateSupplier } from '../../api/suppliers';
 import { ApiValidationError } from '../../api/client';
 import type { Supplier, ValidationErrors } from '../../types/purchases';
 import type { NewSupplierInput } from '../../types/suppliers';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 const props = defineProps<{ supplier: Supplier | null }>();
 const emit = defineEmits<{ saved: [supplier: Supplier]; cancel: [] }>();
@@ -63,60 +66,55 @@ async function submit() {
         </div>
 
         <div>
-            <label class="block text-sm font-semibold text-zinc-800" for="supplier_name">Name</label>
-            <input
+            <Label for="supplier_name">Name</Label>
+            <Input
                 id="supplier_name"
                 v-model="form.name"
                 type="text"
-                class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-            >
-            <p v-if="fieldError('name')" class="mt-1 text-xs font-medium text-rose-700">
+                class="mt-1"
+                :aria-invalid="!!fieldError('name')"
+            />
+            <p v-if="fieldError('name')" class="mt-1 text-xs font-medium text-destructive">
                 {{ fieldError('name') }}
             </p>
         </div>
 
         <div class="grid gap-4 sm:grid-cols-2">
             <div>
-                <label class="block text-sm font-semibold text-zinc-800" for="supplier_email">Email</label>
-                <input
+                <Label for="supplier_email">Email</Label>
+                <Input
                     id="supplier_email"
                     v-model="form.email"
                     type="email"
-                    class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-                >
-                <p v-if="fieldError('email')" class="mt-1 text-xs font-medium text-rose-700">
+                    class="mt-1"
+                    :aria-invalid="!!fieldError('email')"
+                />
+                <p v-if="fieldError('email')" class="mt-1 text-xs font-medium text-destructive">
                     {{ fieldError('email') }}
                 </p>
             </div>
             <div>
-                <label class="block text-sm font-semibold text-zinc-800" for="supplier_phone">Phone</label>
-                <input
+                <Label for="supplier_phone">Phone</Label>
+                <Input
                     id="supplier_phone"
                     v-model="form.phone"
                     type="text"
-                    class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-                >
-                <p v-if="fieldError('phone')" class="mt-1 text-xs font-medium text-rose-700">
+                    class="mt-1"
+                    :aria-invalid="!!fieldError('phone')"
+                />
+                <p v-if="fieldError('phone')" class="mt-1 text-xs font-medium text-destructive">
                     {{ fieldError('phone') }}
                 </p>
             </div>
         </div>
 
-        <div class="flex items-center justify-end gap-2 border-t border-zinc-200 pt-4">
-            <button
-                type="button"
-                class="rounded-md border border-zinc-300 px-4 py-2 text-sm font-semibold text-zinc-700 hover:bg-zinc-50"
-                @click="emit('cancel')"
-            >
+        <div class="flex items-center justify-end gap-2 border-t pt-4">
+            <Button type="button" variant="outline" @click="emit('cancel')">
                 Cancel
-            </button>
-            <button
-                type="submit"
-                class="rounded-md bg-zinc-950 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800 disabled:opacity-50"
-                :disabled="submitState === 'submitting'"
-            >
+            </Button>
+            <Button type="submit" :disabled="submitState === 'submitting'">
                 {{ submitState === 'submitting' ? 'Saving…' : (supplier ? 'Save changes' : 'Create supplier') }}
-            </button>
+            </Button>
         </div>
     </form>
 </template>
