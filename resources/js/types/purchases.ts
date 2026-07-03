@@ -21,6 +21,7 @@ export type Purchase = {
     id: number;
     reference: string;
     status: PurchaseStatus;
+    allowed_next_statuses: PurchaseStatus[];
     order_date: string;
     expected_date: string | null;
     notes: string | null;

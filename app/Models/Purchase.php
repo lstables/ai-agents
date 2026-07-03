@@ -40,6 +40,38 @@ class Purchase extends Model
     }
 
     /**
+     * The purchase workflow: a linear progression toward "received", with
+     * cancellation available from any non-terminal state. "received" and
+     * "cancelled" are terminal — no further transitions are allowed out of
+     * either.
+     *
+     * @return array<string, list<string>>
+     */
+    private static function transitionMap(): array
+    {
+        return [
+            self::STATUS_DRAFT => [self::STATUS_PENDING, self::STATUS_CANCELLED],
+            self::STATUS_PENDING => [self::STATUS_APPROVED, self::STATUS_CANCELLED],
+            self::STATUS_APPROVED => [self::STATUS_RECEIVED, self::STATUS_CANCELLED],
+            self::STATUS_RECEIVED => [],
+            self::STATUS_CANCELLED => [],
+        ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function allowedNextStatuses(): array
+    {
+        return self::transitionMap()[$this->status] ?? [];
+    }
+
+    public function canTransitionTo(string $status): bool
+    {
+        return in_array($status, $this->allowedNextStatuses(), true);
+    }
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array

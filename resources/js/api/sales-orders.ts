@@ -1,6 +1,6 @@
 import { apiRequest } from './client';
 import type { PaginatedResponse } from '../types/purchases';
-import type { NewSalesOrderInput, SalesOrder, SalesOrderFilters } from '../types/sales-orders';
+import type { NewSalesOrderInput, SalesOrder, SalesOrderFilters, SalesOrderStatus } from '../types/sales-orders';
 
 function buildQuery(filters: SalesOrderFilters): string {
     const params = new URLSearchParams();
@@ -41,5 +41,12 @@ export function createSalesOrder(input: NewSalesOrderInput): Promise<{ data: Sal
                 unit_price: item.unit_price,
             })),
         }),
+    });
+}
+
+export function updateSalesOrderStatus(id: number, status: SalesOrderStatus): Promise<{ data: SalesOrder }> {
+    return apiRequest<{ data: SalesOrder }>(`/api/sales-orders/${id}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
     });
 }

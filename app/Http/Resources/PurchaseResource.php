@@ -18,6 +18,7 @@ class PurchaseResource extends JsonResource
             'id' => $this->id,
             'reference' => $this->reference,
             'status' => $this->status,
+            'allowed_next_statuses' => $this->allowedNextStatuses(),
             'order_date' => $this->order_date?->toDateString(),
             'expected_date' => $this->expected_date?->toDateString(),
             'notes' => $this->notes,

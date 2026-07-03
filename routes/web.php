@@ -23,6 +23,7 @@ Route::get('/', function () {
 Route::prefix('api')->middleware(ResolveDemoUser::class)->group(function () {
     Route::get('/purchases', [PurchaseController::class, 'index'])->name('purchases.index');
     Route::post('/purchases', [PurchaseController::class, 'store'])->name('purchases.store');
+    Route::patch('/purchases/{purchase}/status', [PurchaseController::class, 'updateStatus'])->name('purchases.update-status');
     Route::get('/suppliers', [SupplierController::class, 'index'])->name('suppliers.index');
     Route::post('/suppliers', [SupplierController::class, 'store'])->name('suppliers.store');
     Route::put('/suppliers/{supplier}', [SupplierController::class, 'update'])->name('suppliers.update');
@@ -37,6 +38,7 @@ Route::prefix('api')->middleware(ResolveDemoUser::class)->group(function () {
     Route::delete('/customers/{customer}', [CustomerController::class, 'destroy'])->name('customers.destroy');
     Route::get('/sales-orders', [SalesOrderController::class, 'index'])->name('sales-orders.index');
     Route::post('/sales-orders', [SalesOrderController::class, 'store'])->name('sales-orders.store');
+    Route::patch('/sales-orders/{sales_order}/status', [SalesOrderController::class, 'updateStatus'])->name('sales-orders.update-status');
     Route::get('/reports/summary', [ReportController::class, 'summary'])->name('reports.summary');
     Route::get('/dashboard/overview', [DashboardController::class, 'overview'])->name('dashboard.overview');
     Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');

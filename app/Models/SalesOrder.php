@@ -40,6 +40,38 @@ class SalesOrder extends Model
     }
 
     /**
+     * The sales order workflow: a linear progression toward "fulfilled",
+     * with cancellation available from any non-terminal state. "fulfilled"
+     * and "cancelled" are terminal — no further transitions are allowed
+     * out of either.
+     *
+     * @return array<string, list<string>>
+     */
+    private static function transitionMap(): array
+    {
+        return [
+            self::STATUS_DRAFT => [self::STATUS_PENDING, self::STATUS_CANCELLED],
+            self::STATUS_PENDING => [self::STATUS_CONFIRMED, self::STATUS_CANCELLED],
+            self::STATUS_CONFIRMED => [self::STATUS_FULFILLED, self::STATUS_CANCELLED],
+            self::STATUS_FULFILLED => [],
+            self::STATUS_CANCELLED => [],
+        ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function allowedNextStatuses(): array
+    {
+        return self::transitionMap()[$this->status] ?? [];
+    }
+
+    public function canTransitionTo(string $status): bool
+    {
+        return in_array($status, $this->allowedNextStatuses(), true);
+    }
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array
