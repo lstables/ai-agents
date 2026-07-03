@@ -5,6 +5,8 @@ import SalesOrdersTable from './SalesOrdersTable.vue';
 import { fetchAllCustomers } from '../../api/customers';
 import type { Customer } from '../../types/customers';
 import type { SalesOrder } from '../../types/sales-orders';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const showCreateForm = ref(false);
 const customers = ref<Customer[]>([]);
@@ -40,23 +42,23 @@ function handleCreated(salesOrder: SalesOrder) {
                 <p class="text-sm font-semibold text-cyan-700">Sales Orders</p>
                 <h2 class="mt-1 text-2xl font-bold text-zinc-950">Sales orders</h2>
             </div>
-            <button
-                type="button"
-                class="rounded-md bg-zinc-950 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800"
-                @click="showCreateForm = !showCreateForm"
-            >
-                {{ showCreateForm ? 'Close' : 'New sales order' }}
-            </button>
+            <Button type="button" @click="showCreateForm = true">
+                New sales order
+            </Button>
         </div>
 
         <div v-if="confirmation" class="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
             {{ confirmation }}
         </div>
 
-        <div v-if="showCreateForm" class="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
-            <h3 class="mb-4 text-lg font-bold text-zinc-950">New sales order</h3>
-            <SalesOrderCreateForm @created="handleCreated" />
-        </div>
+        <Dialog v-model:open="showCreateForm">
+            <DialogContent class="sm:max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle>New sales order</DialogTitle>
+                </DialogHeader>
+                <SalesOrderCreateForm @created="handleCreated" />
+            </DialogContent>
+        </Dialog>
 
         <SalesOrdersTable :customers="customers" :refresh-token="refreshToken" />
     </div>

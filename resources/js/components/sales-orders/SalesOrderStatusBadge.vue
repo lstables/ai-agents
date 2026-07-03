@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { SalesOrderStatus } from '../../types/sales-orders';
+import { Badge } from '@/components/ui/badge';
 
 const props = defineProps<{ status: SalesOrderStatus }>();
 
@@ -16,10 +17,7 @@ const classes = computed(() => statusClass[props.status]);
 </script>
 
 <template>
-    <span
-        class="inline-flex items-center rounded-md border px-2 py-1 text-xs font-semibold capitalize"
-        :class="classes"
-    >
+    <Badge variant="outline" class="capitalize" :class="classes">
         {{ status }}
-    </span>
+    </Badge>
 </template>

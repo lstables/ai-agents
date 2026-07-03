@@ -1,11 +1,18 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { fetchPurchases } from '../../api/purchases';
 import PurchaseStatusBadge from './PurchaseStatusBadge.vue';
 import { PURCHASE_STATUSES } from '../../types/purchases';
 import type { PaginationMeta, Purchase, PurchaseFilters, Supplier } from '../../types/purchases';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 const props = defineProps<{ suppliers: Supplier[]; refreshToken: number }>();
+
+const ALL_STATUSES = 'all';
+const ALL_SUPPLIERS = 'all';
 
 const purchases = ref<Purchase[]>([]);
 const meta = ref<PaginationMeta | null>(null);
@@ -18,6 +25,20 @@ const filters = reactive<PurchaseFilters>({
     search: '',
     page: 1,
     perPage: 10,
+});
+
+const statusModel = computed<string>({
+    get: () => (filters.status === '' ? ALL_STATUSES : filters.status),
+    set: (value) => {
+        filters.status = value === ALL_STATUSES ? '' : (value as PurchaseFilters['status']);
+    },
+});
+
+const supplierIdModel = computed<string>({
+    get: () => (filters.supplierId === '' ? ALL_SUPPLIERS : String(filters.supplierId)),
+    set: (value) => {
+        filters.supplierId = value === ALL_SUPPLIERS ? '' : Number(value);
+    },
 });
 
 let searchDebounce: ReturnType<typeof setTimeout> | undefined;
@@ -66,24 +87,34 @@ function goToPage(page: number) {
             <h3 class="text-lg font-bold text-zinc-950">Purchases</h3>
 
             <div class="flex flex-wrap gap-2">
-                <input
+                <Input
                     v-model="filters.search"
                     type="search"
                     placeholder="Search reference or supplier"
-                    class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
-                >
-                <select v-model="filters.status" class="rounded-md border border-zinc-300 px-3 py-2 text-sm">
-                    <option value="">All statuses</option>
-                    <option v-for="status in PURCHASE_STATUSES" :key="status" :value="status">
-                        {{ status }}
-                    </option>
-                </select>
-                <select v-model="filters.supplierId" class="rounded-md border border-zinc-300 px-3 py-2 text-sm">
-                    <option value="">All suppliers</option>
-                    <option v-for="supplier in props.suppliers" :key="supplier.id" :value="supplier.id">
-                        {{ supplier.name }}
-                    </option>
-                </select>
+                    class="w-56"
+                />
+                <Select v-model="statusModel">
+                    <SelectTrigger class="w-40">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem :value="ALL_STATUSES">All statuses</SelectItem>
+                        <SelectItem v-for="status in PURCHASE_STATUSES" :key="status" :value="status">
+                            {{ status }}
+                        </SelectItem>
+                    </SelectContent>
+                </Select>
+                <Select v-model="supplierIdModel">
+                    <SelectTrigger class="w-48">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem :value="ALL_SUPPLIERS">All suppliers</SelectItem>
+                        <SelectItem v-for="supplier in props.suppliers" :key="supplier.id" :value="String(supplier.id)">
+                            {{ supplier.name }}
+                        </SelectItem>
+                    </SelectContent>
+                </Select>
             </div>
         </div>
 
@@ -99,36 +130,34 @@ function goToPage(page: number) {
             No purchases match these filters.
         </div>
 
-        <div v-else class="overflow-x-auto">
-            <table class="w-full text-left text-sm">
-                <thead class="border-b border-zinc-200 text-xs font-semibold uppercase tracking-normal text-zinc-500">
-                    <tr>
-                        <th class="px-5 py-3">Reference</th>
-                        <th class="px-5 py-3">Supplier</th>
-                        <th class="px-5 py-3">Status</th>
-                        <th class="px-5 py-3">Order date</th>
-                        <th class="px-5 py-3 text-right">Total</th>
-                        <th class="px-5 py-3 text-right">Balance due</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-zinc-100">
-                    <tr v-for="purchase in purchases" :key="purchase.id">
-                        <td class="px-5 py-3 font-semibold text-zinc-900">{{ purchase.reference }}</td>
-                        <td class="px-5 py-3 text-zinc-700">{{ purchase.supplier?.name ?? '—' }}</td>
-                        <td class="px-5 py-3">
-                            <PurchaseStatusBadge :status="purchase.status" />
-                        </td>
-                        <td class="px-5 py-3 text-zinc-700">{{ purchase.order_date }}</td>
-                        <td class="px-5 py-3 text-right font-semibold text-zinc-900">
-                            {{ purchase.total_amount.toFixed(2) }}
-                        </td>
-                        <td class="px-5 py-3 text-right" :class="purchase.balance_due > 0 ? 'font-semibold text-amber-700' : 'text-emerald-700'">
-                            {{ purchase.balance_due.toFixed(2) }}
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+        <Table v-else>
+            <TableHeader>
+                <TableRow>
+                    <TableHead>Reference</TableHead>
+                    <TableHead>Supplier</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Order date</TableHead>
+                    <TableHead class="text-right">Total</TableHead>
+                    <TableHead class="text-right">Balance due</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                <TableRow v-for="purchase in purchases" :key="purchase.id">
+                    <TableCell class="font-semibold text-zinc-900">{{ purchase.reference }}</TableCell>
+                    <TableCell>{{ purchase.supplier?.name ?? '—' }}</TableCell>
+                    <TableCell>
+                        <PurchaseStatusBadge :status="purchase.status" />
+                    </TableCell>
+                    <TableCell>{{ purchase.order_date }}</TableCell>
+                    <TableCell class="text-right font-semibold text-zinc-900">
+                        {{ purchase.total_amount.toFixed(2) }}
+                    </TableCell>
+                    <TableCell class="text-right" :class="purchase.balance_due > 0 ? 'font-semibold text-amber-700' : 'text-emerald-700'">
+                        {{ purchase.balance_due.toFixed(2) }}
+                    </TableCell>
+                </TableRow>
+            </TableBody>
+        </Table>
 
         <div
             v-if="meta && meta.last_page > 1"
@@ -136,22 +165,24 @@ function goToPage(page: number) {
         >
             <span>Page {{ meta.current_page }} of {{ meta.last_page }} ({{ meta.total }} total)</span>
             <div class="flex gap-2">
-                <button
+                <Button
                     type="button"
-                    class="rounded-md border border-zinc-300 px-3 py-1 font-semibold hover:bg-zinc-50 disabled:opacity-40"
+                    variant="outline"
+                    size="sm"
                     :disabled="meta.current_page <= 1"
                     @click="goToPage(meta.current_page - 1)"
                 >
                     Previous
-                </button>
-                <button
+                </Button>
+                <Button
                     type="button"
-                    class="rounded-md border border-zinc-300 px-3 py-1 font-semibold hover:bg-zinc-50 disabled:opacity-40"
+                    variant="outline"
+                    size="sm"
                     :disabled="meta.current_page >= meta.last_page"
                     @click="goToPage(meta.current_page + 1)"
                 >
                     Next
-                </button>
+                </Button>
             </div>
         </div>
     </div>
