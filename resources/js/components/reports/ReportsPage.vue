@@ -2,6 +2,10 @@
 import { onMounted, reactive, ref } from 'vue';
 import { fetchReportSummary } from '../../api/reports';
 import type { ReportFilters, ReportSummary } from '../../types/reports';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 const filters = reactive<ReportFilters>({ from: '', to: '' });
 const summary = ref<ReportSummary | null>(null);
@@ -40,32 +44,28 @@ function clearFilters() {
 
             <div class="flex flex-wrap items-end gap-2">
                 <div>
-                    <label class="block text-xs font-semibold text-zinc-600" for="report_from">From</label>
-                    <input
+                    <Label for="report_from" class="text-xs">From</Label>
+                    <Input
                         id="report_from"
                         v-model="filters.from"
                         type="date"
-                        class="mt-1 rounded-md border border-zinc-300 px-3 py-2 text-sm"
+                        class="mt-1"
                         @change="load"
-                    >
+                    />
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-zinc-600" for="report_to">To</label>
-                    <input
+                    <Label for="report_to" class="text-xs">To</Label>
+                    <Input
                         id="report_to"
                         v-model="filters.to"
                         type="date"
-                        class="mt-1 rounded-md border border-zinc-300 px-3 py-2 text-sm"
+                        class="mt-1"
                         @change="load"
-                    >
+                    />
                 </div>
-                <button
-                    type="button"
-                    class="rounded-md border border-zinc-300 px-3 py-2 text-sm font-semibold text-zinc-700 hover:bg-zinc-50"
-                    @click="clearFilters"
-                >
+                <Button type="button" variant="outline" @click="clearFilters">
                     Clear
-                </button>
+                </Button>
             </div>
         </div>
 
@@ -129,24 +129,24 @@ function clearFilters() {
                 <div v-if="summary.inventory.items.length === 0" class="px-5 py-6 text-center text-sm text-zinc-500">
                     Nothing is at or below its reorder level.
                 </div>
-                <table v-else class="w-full text-left text-sm">
-                    <thead class="border-b border-zinc-200 text-xs font-semibold uppercase tracking-normal text-zinc-500">
-                        <tr>
-                            <th class="px-5 py-3">SKU</th>
-                            <th class="px-5 py-3">Name</th>
-                            <th class="px-5 py-3 text-right">Quantity</th>
-                            <th class="px-5 py-3 text-right">Reorder level</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-zinc-100">
-                        <tr v-for="item in summary.inventory.items" :key="item.id">
-                            <td class="px-5 py-3 font-semibold text-zinc-900">{{ item.sku }}</td>
-                            <td class="px-5 py-3 text-zinc-700">{{ item.name }}</td>
-                            <td class="px-5 py-3 text-right text-zinc-700">{{ item.quantity_on_hand }}</td>
-                            <td class="px-5 py-3 text-right text-zinc-700">{{ item.reorder_level }}</td>
-                        </tr>
-                    </tbody>
-                </table>
+                <Table v-else>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>SKU</TableHead>
+                            <TableHead>Name</TableHead>
+                            <TableHead class="text-right">Quantity</TableHead>
+                            <TableHead class="text-right">Reorder level</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        <TableRow v-for="item in summary.inventory.items" :key="item.id">
+                            <TableCell class="font-semibold text-zinc-900">{{ item.sku }}</TableCell>
+                            <TableCell>{{ item.name }}</TableCell>
+                            <TableCell class="text-right">{{ item.quantity_on_hand }}</TableCell>
+                            <TableCell class="text-right">{{ item.reorder_level }}</TableCell>
+                        </TableRow>
+                    </TableBody>
+                </Table>
             </section>
 
             <section class="grid gap-6 lg:grid-cols-2">
@@ -157,14 +157,14 @@ function clearFilters() {
                     <div v-if="summary.top_suppliers.length === 0" class="px-5 py-6 text-center text-sm text-zinc-500">
                         No purchase spend yet.
                     </div>
-                    <table v-else class="w-full text-left text-sm">
-                        <tbody class="divide-y divide-zinc-100">
-                            <tr v-for="row in summary.top_suppliers" :key="row.supplier.id">
-                                <td class="px-5 py-3 text-zinc-900">{{ row.supplier.name }}</td>
-                                <td class="px-5 py-3 text-right font-semibold text-zinc-900">{{ row.total_spend.toFixed(2) }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <Table v-else>
+                        <TableBody>
+                            <TableRow v-for="row in summary.top_suppliers" :key="row.supplier.id">
+                                <TableCell>{{ row.supplier.name }}</TableCell>
+                                <TableCell class="text-right font-semibold text-zinc-900">{{ row.total_spend.toFixed(2) }}</TableCell>
+                            </TableRow>
+                        </TableBody>
+                    </Table>
                 </div>
 
                 <div class="rounded-lg border border-zinc-200 bg-white shadow-sm">
@@ -174,14 +174,14 @@ function clearFilters() {
                     <div v-if="summary.top_customers.length === 0" class="px-5 py-6 text-center text-sm text-zinc-500">
                         No sales revenue yet.
                     </div>
-                    <table v-else class="w-full text-left text-sm">
-                        <tbody class="divide-y divide-zinc-100">
-                            <tr v-for="row in summary.top_customers" :key="row.customer.id">
-                                <td class="px-5 py-3 text-zinc-900">{{ row.customer.name }}</td>
-                                <td class="px-5 py-3 text-right font-semibold text-zinc-900">{{ row.total_revenue.toFixed(2) }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <Table v-else>
+                        <TableBody>
+                            <TableRow v-for="row in summary.top_customers" :key="row.customer.id">
+                                <TableCell>{{ row.customer.name }}</TableCell>
+                                <TableCell class="text-right font-semibold text-zinc-900">{{ row.total_revenue.toFixed(2) }}</TableCell>
+                            </TableRow>
+                        </TableBody>
+                    </Table>
                 </div>
             </section>
         </template>
