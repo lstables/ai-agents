@@ -83,6 +83,51 @@ class SalesOrderTest extends TestCase
         ]);
     }
 
+    public function test_a_sales_order_can_mix_inventory_linked_and_free_text_line_items_and_totals_correctly(): void
+    {
+        $customer = Customer::factory()->create();
+        $inventoryItem = InventoryItem::factory()->create();
+
+        $response = $this->postJson('/api/sales-orders', [
+            'customer_id' => $customer->id,
+            'order_date' => now()->toDateString(),
+            'items' => [
+                ['inventory_item_id' => $inventoryItem->id, 'description' => 'Linked', 'quantity' => 2, 'unit_price' => 10],
+                ['description' => 'Free text item', 'quantity' => 1, 'unit_price' => 5],
+            ],
+        ]);
+
+        $response->assertStatus(201);
+        $this->assertEquals(25.0, $response->json('data.total_amount'));
+        $response->assertJsonPath('data.items.0.inventory_item.id', $inventoryItem->id);
+        $response->assertJsonPath('data.items.1.inventory_item', null);
+    }
+
+    public function test_deleting_an_inventory_item_referenced_by_a_sales_order_preserves_order_history(): void
+    {
+        $customer = Customer::factory()->create();
+        $inventoryItem = InventoryItem::factory()->create();
+
+        $created = $this->postJson('/api/sales-orders', [
+            'customer_id' => $customer->id,
+            'order_date' => now()->toDateString(),
+            'items' => [
+                ['inventory_item_id' => $inventoryItem->id, 'description' => 'Linked Widget', 'quantity' => 2, 'unit_price' => 10],
+            ],
+        ]);
+        $created->assertStatus(201);
+
+        $deleteResponse = $this->deleteJson("/api/inventory-items/{$inventoryItem->id}");
+        $deleteResponse->assertStatus(204);
+
+        $this->assertDatabaseHas('sales_order_items', [
+            'inventory_item_id' => null,
+            'description' => 'Linked Widget',
+            'quantity' => 2,
+            'unit_price' => 10,
+        ]);
+    }
+
     public function test_creating_a_sales_order_rejects_an_invalid_inventory_item_id(): void
     {
         $customer = Customer::factory()->create();
