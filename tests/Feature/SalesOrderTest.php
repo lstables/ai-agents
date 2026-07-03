@@ -126,6 +126,28 @@ class SalesOrderTest extends TestCase
             'quantity' => 2,
             'unit_price' => 10,
         ]);
+
+        // Confirm the resource layer (not just the DB row) serializes the
+        // now-orphaned inventory reference as null rather than erroring.
+        $salesOrder = \App\Models\SalesOrder::first()->fresh(['customer', 'items.inventoryItem']);
+        $resource = (new \App\Http\Resources\SalesOrderResource($salesOrder))->response()->getData(true);
+        $this->assertNull($resource['data']['items'][0]['inventory_item']);
+    }
+
+    public function test_an_explicitly_null_inventory_item_id_is_accepted(): void
+    {
+        $customer = Customer::factory()->create();
+
+        $response = $this->postJson('/api/sales-orders', [
+            'customer_id' => $customer->id,
+            'order_date' => now()->toDateString(),
+            'items' => [
+                ['inventory_item_id' => null, 'description' => 'Free text', 'quantity' => 1, 'unit_price' => 1],
+            ],
+        ]);
+
+        $response->assertStatus(201);
+        $this->assertDatabaseHas('sales_order_items', ['inventory_item_id' => null, 'description' => 'Free text']);
     }
 
     public function test_creating_a_sales_order_rejects_an_invalid_inventory_item_id(): void
