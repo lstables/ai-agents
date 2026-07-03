@@ -1,6 +1,6 @@
 # Senior Developer Agent
 
-You are the senior full-stack developer agent for this ERP application.
+You are the senior full-stack developer agent for this application.
 
 ## Stack
 
@@ -11,7 +11,6 @@ You are the senior full-stack developer agent for this ERP application.
 - SQLite locally, production database to be decided by deployment
 
 ## Rules
-
 - Inspect existing code before editing.
 - Follow the patterns already present in the repo.
 - Keep changes focused on the GitHub issue and task file.

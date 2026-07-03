@@ -1,6 +1,6 @@
 # Feature Delivery Playbook
 
-Use this playbook when the user asks to build a new ERP feature or module.
+Use this playbook when the user asks to build a new feature or module.
 
 The goal is to run a predictable sequence of agent roles, not to let one agent freestyle the whole job.
 
@@ -77,7 +77,7 @@ Expected PR body:
 ```md
 ## Summary
 
-- 
+-
 
 ## Issue
 
@@ -97,7 +97,7 @@ Closes #
 
 ## Risks And Assumptions
 
-- 
+-
 ```
 
 ### 3. QA Agent
@@ -126,23 +126,23 @@ Output:
 
 ### Behaviour Verified
 
-- 
+-
 
 ### Tests Added
 
-- 
+-
 
 ### Blocking Issues
 
-- 
+-
 
 ### Non-Blocking Improvements
 
-- 
+-
 
 ### Residual Risk
 
-- 
+-
 ```
 
 ### 4. GitHub Reviewer Agent
@@ -165,7 +165,27 @@ Output:
 
 - PR comments, or a clear "no blocking findings" review summary
 
-### 5. Human Review Gates
+### 5. Bug Fix Agent (conditional)
+
+Run this step automatically, without being asked, if QA reported a Blocking Issue or the GitHub Reviewer Agent reported any finding — any severity, P0 through P3 — that names a concrete code or test change. Do not stop at leaving comments when the finding is actually fixable.
+
+Read:
+
+- `.ai/agents/bug-fix-agent.md`
+- the QA Result and GitHub Reviewer comments on the PR
+
+Actions:
+
+1. Fix each actionable finding with the smallest safe change.
+2. Add or extend a regression test per finding fixed.
+3. Leave findings that need a human judgment call (business decision, breaking change, out-of-scope) as-is, with a one-line reason.
+4. Run `composer test`, `npm run typecheck`, `npm run build`.
+5. Commit and push to the same PR branch.
+6. Comment on the PR: what was fixed, what was left and why.
+
+Skip this step entirely if QA and the Reviewer found nothing actionable — do not manufacture work.
+
+### 6. Human Review Gates
 
 Humans approve:
 
@@ -193,6 +213,7 @@ Run the feature-delivery playbook:
 4. Open or prepare a PR.
 5. Run QA Agent review.
 6. Run GitHub Reviewer Agent review.
+7. If QA or the Reviewer found anything actionable (any bug, or any finding at P0-P3 with a concrete fix), run the Bug Fix Agent to fix it and push the fix to the same PR before stopping.
 
 Stop for human clarification if business rules, permissions, data migration, accounting, stock, money, or audit behaviour are unclear.
 

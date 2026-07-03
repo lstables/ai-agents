@@ -24,6 +24,7 @@ Agent order:
 2. Senior Developer Agent
 3. QA Agent
 4. GitHub Reviewer Agent
+5. Bug Fix Agent — conditional, runs automatically if QA or the Reviewer found anything actionable (see `.ai/agents/bug-fix-agent.md`)
 
 ## Bug Fix
 
@@ -46,6 +47,7 @@ Agent order:
 2. Senior Developer Agent for fix
 3. QA Agent for regression tests
 4. GitHub Reviewer Agent for PR review
+5. Bug Fix Agent — conditional, same trigger as the feature-delivery playbook
 
 ## Review Only
 

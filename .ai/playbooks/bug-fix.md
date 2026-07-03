@@ -8,6 +8,7 @@ Use this playbook when the user asks to fix broken behaviour or a regression.
 2. Senior Developer Agent: implement the smallest safe fix and add a regression test.
 3. QA Agent: verify the original bug is covered and adjacent workflows still pass.
 4. GitHub Reviewer Agent: review the PR for risk.
+5. Bug Fix Agent (conditional): if QA reported a Blocking Issue or the Reviewer found anything actionable at any severity (P0-P3), see `.ai/agents/bug-fix-agent.md` and fix it on the same branch before stopping. Skip if there is nothing actionable.
 
 ## Rules
 

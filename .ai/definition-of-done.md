@@ -5,7 +5,7 @@ A feature is not done until these checks are satisfied.
 ## Product
 
 - Acceptance criteria are met.
-- ERP workflow is understandable to the target user.
+- workflow is understandable to the target user.
 - Edge cases and empty states are handled.
 
 ## Backend
@@ -28,6 +28,7 @@ A feature is not done until these checks are satisfied.
 - `npm run build` passes.
 - QA Agent review is complete.
 - GitHub Reviewer Agent review is complete.
+- Any actionable QA/Reviewer finding (any bug, or any P0-P3 finding with a concrete fix) has been fixed by the Bug Fix Agent, or is explicitly left with a stated reason a human needs to decide it — not silently left as an unaddressed comment.
 
 ## Human Gates
 
