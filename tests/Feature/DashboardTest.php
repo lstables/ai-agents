@@ -21,7 +21,9 @@ class DashboardTest extends TestCase
 
     public function test_the_overview_includes_both_the_report_summary_and_the_trend(): void
     {
-        Purchase::factory()->status(Purchase::STATUS_APPROVED)->create(['total_amount' => 100]);
+        Carbon::setTestNow('2026-01-31');
+
+        Purchase::factory()->status(Purchase::STATUS_APPROVED)->create(['order_date' => '2026-01-31', 'total_amount' => 100]);
 
         $response = $this->getJson('/api/dashboard/overview');
 
@@ -31,6 +33,10 @@ class DashboardTest extends TestCase
         $response->assertJsonPath('trend.days', 30);
         $response->assertJsonCount(30, 'trend.purchases');
         $response->assertJsonCount(30, 'trend.sales_orders');
+
+        $purchaseTrend = collect($response->json('trend.purchases'))->keyBy('date');
+        $this->assertSame(1, $purchaseTrend['2026-01-31']['count']);
+        $this->assertEquals(100.0, $purchaseTrend['2026-01-31']['total']);
     }
 
     public function test_the_trend_is_zero_filled_with_no_data(): void
