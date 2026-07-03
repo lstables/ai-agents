@@ -134,6 +134,42 @@ class CustomerTest extends TestCase
         $response->assertJsonValidationErrors(['name']);
     }
 
+    public function test_updating_a_customer_rejects_an_invalid_email(): void
+    {
+        $customer = Customer::factory()->create();
+
+        $response = $this->putJson("/api/customers/{$customer->id}", [
+            'name' => $customer->name,
+            'email' => 'not-an-email',
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['email']);
+    }
+
+    public function test_creating_a_customer_rejects_a_name_over_255_characters(): void
+    {
+        $response = $this->postJson('/api/customers', ['name' => str_repeat('a', 256)]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['name']);
+    }
+
+    public function test_updating_a_customer_with_only_a_name_does_not_clear_existing_email_or_phone(): void
+    {
+        $customer = Customer::factory()->create(['email' => 'keep@example.test', 'phone' => '555-9999']);
+
+        $response = $this->putJson("/api/customers/{$customer->id}", ['name' => 'Renamed']);
+
+        $response->assertStatus(200);
+        $this->assertDatabaseHas('customers', [
+            'id' => $customer->id,
+            'name' => 'Renamed',
+            'email' => 'keep@example.test',
+            'phone' => '555-9999',
+        ]);
+    }
+
     public function test_a_customer_can_be_deleted(): void
     {
         $customer = Customer::factory()->create();
