@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { Line } from 'vue-chartjs';
+import type { ChartData, ChartOptions } from 'chart.js';
+import './chartjs-setup';
 
 type Series = {
     name: string;
@@ -12,55 +15,33 @@ const props = defineProps<{
     labels: string[];
 }>();
 
-const width = 600;
-const height = 180;
-const paddingX = 10;
-const paddingY = 10;
+const chartData = computed<ChartData<'line'>>(() => ({
+    labels: props.labels,
+    datasets: props.series.map((series) => ({
+        label: series.name,
+        data: series.values,
+        borderColor: series.color,
+        backgroundColor: series.color,
+        tension: 0.2,
+        pointRadius: 0,
+    })),
+}));
 
-const maxValue = computed(() => {
-    const allValues = props.series.flatMap((series) => series.values);
-    return Math.max(1, ...allValues);
-});
-
-function pointsFor(values: number[]): string {
-    const usableWidth = width - paddingX * 2;
-    const usableHeight = height - paddingY * 2;
-    const step = values.length > 1 ? usableWidth / (values.length - 1) : 0;
-
-    return values
-        .map((value, index) => {
-            const x = paddingX + index * step;
-            const y = paddingY + usableHeight - (value / maxValue.value) * usableHeight;
-            return `${x.toFixed(1)},${y.toFixed(1)}`;
-        })
-        .join(' ');
-}
-
-const firstLabel = computed(() => props.labels[0] ?? '');
-const lastLabel = computed(() => props.labels[props.labels.length - 1] ?? '');
+const chartOptions: ChartOptions<'line'> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+        legend: { display: true, position: 'bottom' },
+    },
+    scales: {
+        y: { beginAtZero: true, ticks: { precision: 0 } },
+        x: { ticks: { maxTicksLimit: 6 } },
+    },
+};
 </script>
 
 <template>
-    <div>
-        <svg :viewBox="`0 0 ${width} ${height}`" class="w-full" role="img" aria-label="Activity trend chart">
-            <polyline
-                v-for="line in series"
-                :key="line.name"
-                :points="pointsFor(line.values)"
-                fill="none"
-                :stroke="line.color"
-                stroke-width="2"
-            />
-        </svg>
-        <div class="mt-1 flex justify-between text-xs text-zinc-500">
-            <span>{{ firstLabel }}</span>
-            <span>{{ lastLabel }}</span>
-        </div>
-        <div class="mt-3 flex flex-wrap gap-4 text-sm">
-            <div v-for="line in series" :key="line.name" class="flex items-center gap-2">
-                <span class="h-2 w-2 rounded-full" :style="{ backgroundColor: line.color }" />
-                <span class="text-zinc-700">{{ line.name }}</span>
-            </div>
-        </div>
+    <div class="h-56">
+        <Line :data="chartData" :options="chartOptions" />
     </div>
 </template>
