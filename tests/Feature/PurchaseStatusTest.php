@@ -47,6 +47,16 @@ class PurchaseStatusTest extends TestCase
         $this->assertSame(Purchase::STATUS_DRAFT, $purchase->fresh()->status);
     }
 
+    public function test_transitioning_to_the_same_status_is_rejected(): void
+    {
+        $purchase = Purchase::factory()->status(Purchase::STATUS_PENDING)->create();
+
+        $response = $this->patchJson("/api/purchases/{$purchase->id}/status", ['status' => Purchase::STATUS_PENDING]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['status']);
+    }
+
     public function test_a_terminal_status_cannot_transition_further(): void
     {
         $received = Purchase::factory()->status(Purchase::STATUS_RECEIVED)->create();

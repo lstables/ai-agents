@@ -47,6 +47,16 @@ class SalesOrderStatusTest extends TestCase
         $this->assertSame(SalesOrder::STATUS_DRAFT, $salesOrder->fresh()->status);
     }
 
+    public function test_transitioning_to_the_same_status_is_rejected(): void
+    {
+        $salesOrder = SalesOrder::factory()->status(SalesOrder::STATUS_PENDING)->create();
+
+        $response = $this->patchJson("/api/sales-orders/{$salesOrder->id}/status", ['status' => SalesOrder::STATUS_PENDING]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['status']);
+    }
+
     public function test_a_terminal_status_cannot_transition_further(): void
     {
         $fulfilled = SalesOrder::factory()->status(SalesOrder::STATUS_FULFILLED)->create();
