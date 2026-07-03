@@ -1,6 +1,6 @@
 # Release Check Playbook
 
-Use this playbook before shipping merged ERP work.
+Use this playbook before shipping merged work.
 
 ## Agent Sequence
 

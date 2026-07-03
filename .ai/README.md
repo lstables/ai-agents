@@ -10,6 +10,7 @@ The agents do not replace human approval. They create focused branches, add test
 - Senior Developer Agent: implements Laravel, Vue, TypeScript, and Tailwind changes on a feature branch.
 - QA Agent: verifies behaviour, adds or requests tests, and checks edge cases.
 - GitHub Reviewer Agent: reviews the PR as a strict code reviewer.
+- Bug Fix Agent: fixes whatever QA or the Reviewer found, instead of leaving it as a comment for a human to act on. Runs automatically when there's something actionable; see `.ai/agents/bug-fix-agent.md`.
 
 ## Human Gates
 
@@ -24,5 +25,6 @@ The agents do not replace human approval. They create focused branches, add test
 3. Senior Developer Agent implements a feature branch and opens a PR.
 4. QA Agent validates the PR and adds missing tests where appropriate.
 5. GitHub Reviewer Agent leaves concrete review comments.
-6. CI must pass.
-7. Humans approve and merge.
+6. Bug Fix Agent fixes anything actionable from steps 4-5 and pushes to the same PR — humans review fixed/confirmed work, not a pile of open findings.
+7. CI must pass.
+8. Humans approve and merge.

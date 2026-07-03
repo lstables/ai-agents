@@ -40,6 +40,8 @@ For new product functionality, use `.ai/playbooks/feature-delivery.md`.
 2. Senior Developer Agent
 3. QA Agent
 4. GitHub Reviewer Agent
-5. Human review gates
+5. Bug Fix Agent — conditional: run automatically, without being asked, if QA reported a Blocking Issue or the Reviewer found anything actionable at any severity (P0-P3). Fix it on the same PR branch before stopping. Skip only if there is genuinely nothing actionable, or if a finding needs a human judgment call — see `.ai/agents/bug-fix-agent.md`.
+6. Human review gates
 
 Do not skip the Team Lead Agent for non-trivial ERP features.
+Do not skip the Bug Fix Agent step by leaving fixable findings as comments only.
