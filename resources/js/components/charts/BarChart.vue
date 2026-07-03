@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { Bar } from 'vue-chartjs';
+import type { ChartData, ChartOptions } from 'chart.js';
+import './chartjs-setup';
 
 type BarDatum = {
     label: string;
@@ -8,33 +11,35 @@ type BarDatum = {
 
 const props = defineProps<{
     data: BarDatum[];
-    barColorClass?: string;
-    valueFormatter?: (value: number) => string;
+    color?: string;
 }>();
 
-const maxValue = computed(() => Math.max(1, ...props.data.map((datum) => datum.value)));
+const chartData = computed<ChartData<'bar'>>(() => ({
+    labels: props.data.map((datum) => datum.label),
+    datasets: [
+        {
+            data: props.data.map((datum) => datum.value),
+            backgroundColor: props.color ?? '#0891b2',
+            borderRadius: 4,
+        },
+    ],
+}));
 
-function widthPercent(value: number): number {
-    return Math.round((value / maxValue.value) * 100);
-}
-
-function formattedValue(value: number): string {
-    return props.valueFormatter ? props.valueFormatter(value) : String(value);
-}
+const chartOptions: ChartOptions<'bar'> = {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+        legend: { display: false },
+    },
+    scales: {
+        x: { beginAtZero: true, ticks: { precision: 0 } },
+    },
+};
 </script>
 
 <template>
-    <div class="space-y-2">
-        <div v-for="datum in data" :key="datum.label" class="grid grid-cols-[100px_1fr_60px] items-center gap-3 text-sm">
-            <span class="truncate capitalize text-zinc-600" :title="datum.label">{{ datum.label }}</span>
-            <div class="h-3 rounded-full bg-zinc-100">
-                <div
-                    class="h-3 rounded-full"
-                    :class="barColorClass ?? 'bg-cyan-600'"
-                    :style="{ width: `${widthPercent(datum.value)}%` }"
-                />
-            </div>
-            <span class="text-right font-semibold text-zinc-900">{{ formattedValue(datum.value) }}</span>
-        </div>
+    <div class="h-56">
+        <Bar :data="chartData" :options="chartOptions" />
     </div>
 </template>

@@ -2,6 +2,7 @@
 
 Backend:
 
+- Should use Pest as the test suite.
 - Use Laravel feature tests for workflows.
 - Test permissions, validation, state transitions, and business calculations.
 - Use factories for setup.

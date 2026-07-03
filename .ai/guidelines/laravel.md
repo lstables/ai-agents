@@ -3,6 +3,7 @@
 - Use Form Requests for user input validation when endpoints accept meaningful data.
 - Use policies or gates for authorization.
 - Keep controllers thin.
+- Use Eloquent always, creating relationships to Laravel standards.
 - Put business calculations in service classes or actions.
 - Use database transactions for multi-write business operations.
 - Use feature tests for end-to-end workflow behaviour.

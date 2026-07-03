@@ -142,7 +142,7 @@ const trendSeries = computed(() => {
                 <div class="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
                     <h3 class="text-lg font-bold text-zinc-950">Sales orders by status</h3>
                     <div class="mt-4">
-                        <BarChart :data="salesByStatus" bar-color-class="bg-violet-600" />
+                        <BarChart :data="salesByStatus" color="#7c3aed" />
                     </div>
                 </div>
             </section>
