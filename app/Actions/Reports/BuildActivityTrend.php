@@ -32,29 +32,33 @@ class BuildActivityTrend
     }
 
     /**
+     * Grouping by day is done in PHP rather than via a raw SQL date
+     * function (e.g. SQLite/MySQL's `date(...)`) so this stays portable
+     * across database engines that don't share a common "strip the time
+     * component" SQL function (e.g. Postgres). Volumes here are small
+     * (a fixed 30-day window), so this isn't a performance concern.
+     *
      * @param  class-string<\Illuminate\Database\Eloquent\Model>  $model
      * @return list<array{date: string, count: int, total: float}>
      */
     private function dailySeries(string $model, string $cancelledStatus, string $totalColumn, Carbon $from, Carbon $to): array
     {
-        $rows = $model::query()
+        $rowsByDay = $model::query()
             ->whereDate('order_date', '>=', $from)
             ->whereDate('order_date', '<=', $to)
             ->where('status', '!=', $cancelledStatus)
-            ->selectRaw("date(order_date) as day, count(*) as count, coalesce(sum({$totalColumn}), 0) as total")
-            ->groupBy('day')
-            ->get()
-            ->keyBy('day');
+            ->get(['order_date', $totalColumn])
+            ->groupBy(fn ($row) => $row->order_date->toDateString());
 
         $series = [];
         for ($date = $from->copy(); $date->lte($to); $date->addDay()) {
             $key = $date->toDateString();
-            $row = $rows->get($key);
+            $dayRows = $rowsByDay->get($key);
 
             $series[] = [
                 'date' => $key,
-                'count' => (int) ($row->count ?? 0),
-                'total' => round((float) ($row->total ?? 0), 2),
+                'count' => $dayRows?->count() ?? 0,
+                'total' => round((float) ($dayRows?->sum($totalColumn) ?? 0), 2),
             ];
         }
 
