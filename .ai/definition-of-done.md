@@ -5,6 +5,7 @@ A feature is not done until these checks are satisfied.
 ## Product
 
 - Acceptance criteria are met.
+- Each met acceptance criterion is checked off on the GitHub issue itself, not just implied by a merged PR — a human should be able to tell what's done from the issue alone.
 - workflow is understandable to the target user.
 - Edge cases and empty states are handled.
 

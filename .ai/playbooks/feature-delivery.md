@@ -14,6 +14,16 @@ At least one of these should exist:
 
 If there is no GitHub issue, create a local task file first and ask whether a GitHub issue should be created.
 
+## Tracking Progress On The Issue
+
+The GitHub issue's "Acceptance criteria" checklist is the human-visible progress signal for this whole sequence — don't leave every box unchecked until a human has to read the PR/task file to find out what's actually done.
+
+As soon as an acceptance criterion is genuinely verified true — by a passing test, a live smoke test, or direct inspection — check its box on the issue (`gh issue edit <number> --body-file <file>` with the box flipped from `- [ ]` to `- [x]`). Do this incrementally as work progresses, not all at once at the end:
+
+- Senior Developer Agent checks off criteria its own implementation and tests directly prove.
+- QA Agent checks off (or unchecks, if a regression is found) criteria it independently verified, including anything the Senior Developer Agent missed.
+- Never check a box on the strength of "I wrote code for this" alone — only when it's actually been exercised (a test ran green, or a live check confirmed it).
+
 ## Agent Sequence
 
 ### 1. Team Lead Agent
@@ -71,6 +81,7 @@ npm run build
 
 7. Commit changes.
 8. Open or prepare a PR.
+9. Check off each acceptance-criteria box on the GitHub issue that the tests just run actually prove — see "Tracking Progress On The Issue" above. Leave unproven criteria unchecked rather than guessing.
 
 Expected PR body:
 
@@ -113,7 +124,7 @@ Read:
 
 Actions:
 
-1. Verify acceptance criteria.
+1. Verify acceptance criteria — for each one, check its box on the GitHub issue if this pass independently confirms it (including any the Senior Developer Agent left unchecked), or uncheck it if a regression is found. See "Tracking Progress On The Issue" above.
 2. Check permissions, validation, edge cases, empty states, error states, and regression risk.
 3. Add focused tests if the gap is clear and low-risk.
 4. Otherwise leave concrete QA findings.
