@@ -1,5 +1,5 @@
 name: ERP Feature
-description: Request a new ERP feature for the AI delivery workflow.
+description: Request a new feature for the AI delivery workflow.
 title: "[Feature]: "
 labels:
   - feature
@@ -9,7 +9,7 @@ body:
     id: problem
     attributes:
       label: Business problem
-      description: What ERP workflow or operational issue should this solve?
+      description: What workflow or operational issue should this solve?
     validations:
       required: true
   - type: textarea
@@ -18,14 +18,14 @@ body:
       label: Business rules
       description: List the rules the system must enforce.
     validations:
-      required: true
+      required: false
   - type: textarea
     id: acceptance
     attributes:
       label: Acceptance criteria
       description: Use checklist items where possible.
       value: |
-        - [ ] 
+        - [ ]
     validations:
       required: true
   - type: textarea
@@ -34,7 +34,7 @@ body:
       label: Permissions and roles
       description: Which users can view, create, update, approve, or override this feature?
     validations:
-      required: true
+      required: false
   - type: textarea
     id: data
     attributes:

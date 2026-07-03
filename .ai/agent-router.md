@@ -12,7 +12,7 @@ User wording:
 - "implement"
 - "new module"
 - "new workflow"
-- "new ERP feature"
+- "new feature"
 
 Use:
 
