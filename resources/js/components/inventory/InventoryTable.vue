@@ -126,6 +126,7 @@ async function remove(item: InventoryItem) {
                         <th class="px-5 py-3 text-right">Quantity</th>
                         <th class="px-5 py-3 text-right">Reorder level</th>
                         <th class="px-5 py-3">Unit</th>
+                        <th class="px-5 py-3">Supplier</th>
                         <th class="px-5 py-3 text-right">Actions</th>
                     </tr>
                 </thead>
@@ -144,6 +145,7 @@ async function remove(item: InventoryItem) {
                         </td>
                         <td class="px-5 py-3 text-right text-zinc-700">{{ item.reorder_level ?? '—' }}</td>
                         <td class="px-5 py-3 text-zinc-700">{{ item.unit ?? '—' }}</td>
+                        <td class="px-5 py-3 text-zinc-700">{{ item.supplier?.name ?? '—' }}</td>
                         <td class="px-5 py-3 text-right">
                             <div class="flex justify-end gap-2">
                                 <button

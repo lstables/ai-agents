@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\InventoryItem;
+use App\Models\Supplier;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -223,5 +224,74 @@ class InventoryItemTest extends TestCase
             $this->assertTrue($item['is_below_reorder_level']);
             $this->assertStringContainsString('Acme', $item['name']);
         }
+    }
+
+    public function test_an_inventory_item_can_be_created_with_a_preferred_supplier(): void
+    {
+        $supplier = Supplier::factory()->create(['name' => 'Acme Bolts Ltd']);
+
+        $response = $this->postJson('/api/inventory-items', [
+            'sku' => 'SKU-SUP-001',
+            'name' => 'Widget',
+            'quantity_on_hand' => 10,
+            'supplier_id' => $supplier->id,
+        ]);
+
+        $response->assertStatus(201);
+        $response->assertJsonPath('data.supplier.id', $supplier->id);
+        $response->assertJsonPath('data.supplier.name', 'Acme Bolts Ltd');
+        $this->assertDatabaseHas('inventory_items', ['sku' => 'SKU-SUP-001', 'supplier_id' => $supplier->id]);
+    }
+
+    public function test_an_inventory_item_created_without_a_supplier_has_a_null_supplier(): void
+    {
+        $response = $this->postJson('/api/inventory-items', [
+            'sku' => 'SKU-SUP-002',
+            'name' => 'Widget',
+            'quantity_on_hand' => 10,
+        ]);
+
+        $response->assertStatus(201);
+        $this->assertNull($response->json('data.supplier'));
+    }
+
+    public function test_creating_an_inventory_item_rejects_an_invalid_supplier_id(): void
+    {
+        $response = $this->postJson('/api/inventory-items', [
+            'sku' => 'SKU-SUP-003',
+            'name' => 'Widget',
+            'quantity_on_hand' => 10,
+            'supplier_id' => 999999,
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['supplier_id']);
+    }
+
+    public function test_an_inventory_items_preferred_supplier_can_be_changed_on_update(): void
+    {
+        $originalSupplier = Supplier::factory()->create();
+        $newSupplier = Supplier::factory()->create();
+        $item = InventoryItem::factory()->create(['supplier_id' => $originalSupplier->id]);
+
+        $response = $this->putJson("/api/inventory-items/{$item->id}", [
+            'sku' => $item->sku,
+            'name' => $item->name,
+            'quantity_on_hand' => $item->quantity_on_hand,
+            'supplier_id' => $newSupplier->id,
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('data.supplier.id', $newSupplier->id);
+    }
+
+    public function test_an_inventory_items_supplier_becomes_null_when_the_supplier_is_deleted(): void
+    {
+        $supplier = Supplier::factory()->create();
+        $item = InventoryItem::factory()->create(['supplier_id' => $supplier->id]);
+
+        $supplier->delete();
+
+        $this->assertNull($item->fresh()->supplier_id);
     }
 }

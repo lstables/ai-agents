@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { reactive, ref, watch } from 'vue';
+import { onMounted, reactive, ref, watch } from 'vue';
 import { createInventoryItem, updateInventoryItem } from '../../api/inventory';
+import { fetchAllSuppliers } from '../../api/suppliers';
 import { ApiValidationError } from '../../api/client';
 import type { InventoryItem, NewInventoryItemInput } from '../../types/inventory';
-import type { ValidationErrors } from '../../types/purchases';
+import type { Supplier, ValidationErrors } from '../../types/purchases';
 
 const props = defineProps<{ item: InventoryItem | null }>();
 const emit = defineEmits<{ saved: [item: InventoryItem]; cancel: [] }>();
@@ -11,6 +12,8 @@ const emit = defineEmits<{ saved: [item: InventoryItem]; cancel: [] }>();
 const submitState = ref<'idle' | 'submitting' | 'error'>('idle');
 const errors = ref<ValidationErrors>({});
 const generalError = ref('');
+const suppliers = ref<Supplier[]>([]);
+const suppliersState = ref<'loading' | 'ready' | 'error'>('loading');
 
 function toInput(item: InventoryItem | null): NewInventoryItemInput {
     return {
@@ -20,6 +23,7 @@ function toInput(item: InventoryItem | null): NewInventoryItemInput {
         quantity_on_hand: item ? String(item.quantity_on_hand) : '0',
         reorder_level: item?.reorder_level != null ? String(item.reorder_level) : '',
         unit: item?.unit ?? '',
+        supplier_id: item?.supplier?.id ?? '',
     };
 }
 
@@ -30,6 +34,20 @@ watch(() => props.item, (item) => {
     errors.value = {};
     generalError.value = '';
 });
+
+async function loadSuppliers() {
+    suppliersState.value = 'loading';
+
+    try {
+        const response = await fetchAllSuppliers();
+        suppliers.value = response.data;
+        suppliersState.value = 'ready';
+    } catch {
+        suppliersState.value = 'error';
+    }
+}
+
+onMounted(loadSuppliers);
 
 function fieldError(field: string): string | null {
     return errors.value[field]?.[0] ?? null;
@@ -148,6 +166,27 @@ async function submit() {
                     {{ fieldError('unit') }}
                 </p>
             </div>
+        </div>
+
+        <div>
+            <label class="block text-sm font-semibold text-zinc-800" for="item_supplier_id">Preferred supplier</label>
+            <select
+                id="item_supplier_id"
+                v-model="form.supplier_id"
+                class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
+                :disabled="suppliersState === 'loading'"
+            >
+                <option value="">No preferred supplier</option>
+                <option v-for="supplier in suppliers" :key="supplier.id" :value="supplier.id">
+                    {{ supplier.name }}
+                </option>
+            </select>
+            <p v-if="suppliersState === 'error'" class="mt-1 text-xs font-medium text-rose-700">
+                Could not load suppliers.
+            </p>
+            <p v-if="fieldError('supplier_id')" class="mt-1 text-xs font-medium text-rose-700">
+                {{ fieldError('supplier_id') }}
+            </p>
         </div>
 
         <div class="flex items-center justify-end gap-2 border-t border-zinc-200 pt-4">

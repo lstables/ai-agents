@@ -1,3 +1,5 @@
+import type { Supplier } from './purchases';
+
 export type InventoryItem = {
     id: number;
     sku: string;
@@ -7,6 +9,7 @@ export type InventoryItem = {
     reorder_level: number | null;
     unit: string | null;
     is_below_reorder_level: boolean;
+    supplier: Supplier | null;
 };
 
 export type InventoryItemFilters = {
@@ -23,4 +26,5 @@ export type NewInventoryItemInput = {
     quantity_on_hand: string;
     reorder_level: string;
     unit: string;
+    supplier_id: number | '';
 };

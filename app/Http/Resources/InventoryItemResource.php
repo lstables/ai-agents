@@ -23,6 +23,7 @@ class InventoryItemResource extends JsonResource
             'reorder_level' => $this->reorder_level,
             'unit' => $this->unit,
             'is_below_reorder_level' => $this->isBelowReorderLevel(),
+            'supplier' => new SupplierResource($this->whenLoaded('supplier')),
         ];
     }
 }

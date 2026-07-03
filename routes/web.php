@@ -3,6 +3,7 @@
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\InventoryItemController;
 use App\Http\Controllers\PurchaseController;
+use App\Http\Controllers\SalesOrderController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Middleware\ResolveDemoUser;
 use Illuminate\Support\Facades\Route;
@@ -31,4 +32,6 @@ Route::prefix('api')->middleware(ResolveDemoUser::class)->group(function () {
     Route::post('/customers', [CustomerController::class, 'store'])->name('customers.store');
     Route::put('/customers/{customer}', [CustomerController::class, 'update'])->name('customers.update');
     Route::delete('/customers/{customer}', [CustomerController::class, 'destroy'])->name('customers.destroy');
+    Route::get('/sales-orders', [SalesOrderController::class, 'index'])->name('sales-orders.index');
+    Route::post('/sales-orders', [SalesOrderController::class, 'store'])->name('sales-orders.store');
 });

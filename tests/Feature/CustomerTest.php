@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Customer;
+use App\Models\SalesOrder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -178,5 +179,17 @@ class CustomerTest extends TestCase
 
         $response->assertStatus(204);
         $this->assertDatabaseMissing('customers', ['id' => $customer->id]);
+    }
+
+    public function test_deleting_a_customer_with_existing_sales_orders_is_rejected(): void
+    {
+        $customer = Customer::factory()->create();
+        SalesOrder::factory()->create(['customer_id' => $customer->id]);
+
+        $response = $this->deleteJson("/api/customers/{$customer->id}");
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['customer']);
+        $this->assertDatabaseHas('customers', ['id' => $customer->id]);
     }
 }
