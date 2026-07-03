@@ -12,7 +12,6 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
     AlertDialog,
-    AlertDialogAction,
     AlertDialogCancel,
     AlertDialogContent,
     AlertDialogDescription,
@@ -88,6 +87,15 @@ async function confirmDelete() {
     if (!item) {
         return;
     }
+
+    // Close the dialog immediately: AlertDialogAction can't be used here
+    // because Reka UI's AlertDialogAction is DialogClose under the hood, and
+    // its template-bound onOpenChange(false) click handler always merges
+    // ahead of an attrs-fallthrough @click (Vue merges root-vnode-authored
+    // handlers before fallthrough attrs), so it would null
+    // itemPendingDelete before this function's body ever ran. Using a plain
+    // Button here and closing explicitly avoids that ordering race.
+    itemPendingDelete.value = null;
 
     deletingId.value = item.id;
     deleteError.value = '';
@@ -223,9 +231,9 @@ async function confirmDelete() {
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction variant="destructive" @click="confirmDelete">
+                    <Button type="button" variant="destructive" @click="confirmDelete">
                         Delete
-                    </AlertDialogAction>
+                    </Button>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>

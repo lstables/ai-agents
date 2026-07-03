@@ -251,15 +251,17 @@ async function submit() {
                             {{ fieldError(`items.${index}.unit_price`) }}
                         </p>
                     </div>
-                    <button
+                    <Button
                         type="button"
-                        class="mt-1 text-zinc-400 hover:text-rose-600 disabled:opacity-30"
+                        variant="ghost"
+                        size="icon-xs"
+                        class="mt-1 text-zinc-400 hover:text-rose-600"
                         :disabled="form.items.length === 1"
                         title="Remove item"
                         @click="removeItem(index)"
                     >
                         &times;
-                    </button>
+                    </Button>
                 </div>
             </div>
 
