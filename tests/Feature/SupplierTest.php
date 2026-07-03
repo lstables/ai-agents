@@ -12,11 +12,17 @@ class SupplierTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_guests_cannot_list_suppliers(): void
+    public function test_a_request_with_no_session_is_resolved_as_the_demo_user_and_can_list_suppliers(): void
     {
+        // This demo app has no login flow: ResolveDemoUser resolves every
+        // request as a single demo user, so there is no unauthenticated
+        // case to reject here.
+        Supplier::factory()->count(3)->create();
+
         $response = $this->getJson('/api/suppliers');
 
-        $response->assertStatus(401);
+        $response->assertStatus(200);
+        $response->assertJsonCount(3, 'data');
     }
 
     public function test_an_authenticated_user_can_list_suppliers(): void
@@ -60,12 +66,12 @@ class SupplierTest extends TestCase
         $byEmail->assertJsonPath('data.0.id', $match->id);
     }
 
-    public function test_guests_cannot_create_suppliers(): void
+    public function test_a_request_with_no_session_is_resolved_as_the_demo_user_and_can_create_suppliers(): void
     {
         $response = $this->postJson('/api/suppliers', ['name' => 'New Supplier']);
 
-        $response->assertStatus(401);
-        $this->assertDatabaseCount('suppliers', 0);
+        $response->assertStatus(201);
+        $this->assertDatabaseHas('suppliers', ['name' => 'New Supplier']);
     }
 
     public function test_an_authenticated_user_can_create_a_supplier(): void
@@ -157,13 +163,13 @@ class SupplierTest extends TestCase
         $this->assertDatabaseHas('suppliers', ['id' => $supplier->id]);
     }
 
-    public function test_guests_cannot_delete_suppliers(): void
+    public function test_a_request_with_no_session_is_resolved_as_the_demo_user_and_can_delete_suppliers(): void
     {
         $supplier = Supplier::factory()->create();
 
         $response = $this->deleteJson("/api/suppliers/{$supplier->id}");
 
-        $response->assertStatus(401);
-        $this->assertDatabaseHas('suppliers', ['id' => $supplier->id]);
+        $response->assertStatus(204);
+        $this->assertDatabaseMissing('suppliers', ['id' => $supplier->id]);
     }
 }

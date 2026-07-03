@@ -17,11 +17,17 @@ class SupplierApiTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_guests_cannot_list_suppliers(): void
+    public function test_a_request_with_no_session_is_resolved_as_the_demo_user_and_can_list_suppliers(): void
     {
+        // This demo app has no login flow: ResolveDemoUser resolves every
+        // request as a single demo user, so there is no unauthenticated
+        // case to reject here.
+        Supplier::factory()->count(2)->create();
+
         $response = $this->getJson('/api/suppliers');
 
-        $response->assertStatus(401);
+        $response->assertStatus(200);
+        $response->assertJsonCount(2, 'data');
     }
 
     public function test_an_authenticated_user_can_list_suppliers(): void

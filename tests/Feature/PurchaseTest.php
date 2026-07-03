@@ -12,14 +12,20 @@ class PurchaseTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_guests_cannot_list_purchases(): void
+    public function test_a_request_with_no_session_is_resolved_as_the_demo_user_and_can_list_purchases(): void
     {
+        // This demo app has no login flow: ResolveDemoUser resolves every
+        // request as a single demo user, so there is no unauthenticated
+        // case to reject here.
+        Purchase::factory()->count(2)->create();
+
         $response = $this->getJson('/api/purchases');
 
-        $response->assertStatus(401);
+        $response->assertStatus(200);
+        $response->assertJsonCount(2, 'data');
     }
 
-    public function test_guests_cannot_create_purchases(): void
+    public function test_a_request_with_no_session_is_resolved_as_the_demo_user_and_can_create_purchases(): void
     {
         $supplier = Supplier::factory()->create();
 
@@ -31,8 +37,11 @@ class PurchaseTest extends TestCase
             ],
         ]);
 
-        $response->assertStatus(401);
-        $this->assertDatabaseCount('purchases', 0);
+        $response->assertStatus(201);
+        $this->assertDatabaseCount('purchases', 1);
+
+        $purchase = Purchase::first();
+        $this->assertSame('demo@example.com', $purchase->creator->email);
     }
 
     public function test_an_authenticated_user_can_create_a_purchase_with_line_items(): void
