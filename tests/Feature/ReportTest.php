@@ -103,6 +103,19 @@ class ReportTest extends TestCase
         $this->assertFalse($supplierIds->contains($cancelledOnlySupplier->id));
     }
 
+    public function test_top_suppliers_excludes_suppliers_with_no_purchases_at_all(): void
+    {
+        $withPurchase = Supplier::factory()->create();
+        Supplier::factory()->create(); // never purchased from
+        Purchase::factory()->status(Purchase::STATUS_APPROVED)->create(['supplier_id' => $withPurchase->id, 'total_amount' => 10]);
+
+        $response = $this->getJson('/api/reports/summary');
+
+        $response->assertStatus(200);
+        $response->assertJsonCount(1, 'top_suppliers');
+        $response->assertJsonPath('top_suppliers.0.supplier.id', $withPurchase->id);
+    }
+
     public function test_top_customers_are_capped_at_five(): void
     {
         foreach (range(1, 7) as $i) {
@@ -140,5 +153,21 @@ class ReportTest extends TestCase
         $response = $this->getJson('/api/reports/summary?from=2026-02-01&to=2026-01-01');
 
         $response->assertStatus(422);
+    }
+
+    public function test_the_date_range_filter_supports_an_open_ended_from_or_to(): void
+    {
+        Purchase::factory()->status(Purchase::STATUS_APPROVED)->create(['order_date' => '2026-01-01', 'total_amount' => 10]);
+        Purchase::factory()->status(Purchase::STATUS_APPROVED)->create(['order_date' => '2026-02-01', 'total_amount' => 20]);
+
+        $fromOnly = $this->getJson('/api/reports/summary?from=2026-01-15');
+        $fromOnly->assertStatus(200);
+        $fromOnly->assertJsonPath('purchasing.total_orders', 1);
+        $this->assertEquals(20.0, $fromOnly->json('purchasing.total_spend'));
+
+        $toOnly = $this->getJson('/api/reports/summary?to=2026-01-15');
+        $toOnly->assertStatus(200);
+        $toOnly->assertJsonPath('purchasing.total_orders', 1);
+        $this->assertEquals(10.0, $toOnly->json('purchasing.total_spend'));
     }
 }
