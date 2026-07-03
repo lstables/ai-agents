@@ -219,6 +219,25 @@ class PaymentTest extends TestCase
         $this->assertDatabaseCount('payments', 0);
     }
 
+    public function test_an_invalid_payable_type_does_not_also_report_a_misleading_payable_id_error(): void
+    {
+        // payable_id here is a real sales_order id, which would (wrongly)
+        // fail an `exists:purchases` check if the invalid payable_type
+        // fell back to validating against the purchases table.
+        $salesOrder = SalesOrder::factory()->create();
+
+        $response = $this->postJson('/api/payments', [
+            'payable_type' => 'not-a-real-type',
+            'payable_id' => $salesOrder->id,
+            'amount' => 10,
+            'payment_date' => now()->toDateString(),
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['payable_type']);
+        $response->assertJsonMissingValidationErrors(['payable_id']);
+    }
+
     public function test_recording_a_payment_rejects_an_unknown_payable_id(): void
     {
         $response = $this->postJson('/api/payments', [

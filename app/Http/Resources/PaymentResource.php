@@ -2,8 +2,6 @@
 
 namespace App\Http\Resources;
 
-use App\Models\Purchase;
-use App\Models\SalesOrder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -23,12 +21,12 @@ class PaymentResource extends JsonResource
             'method' => $this->method,
             'reference' => $this->reference,
             'notes' => $this->notes,
+            // payable_type is already the short alias ("purchase" /
+            // "sales_order"), not a raw class name, since it's read back
+            // through the enforced morph map — no need to re-derive it
+            // from get_class($this->payable) and duplicate that mapping.
             'payable' => $this->whenLoaded('payable', fn () => [
-                'type' => match (get_class($this->payable)) {
-                    Purchase::class => 'purchase',
-                    SalesOrder::class => 'sales_order',
-                    default => null,
-                },
+                'type' => $this->payable_type,
                 'id' => $this->payable->id,
                 'reference' => $this->payable->reference,
             ]),

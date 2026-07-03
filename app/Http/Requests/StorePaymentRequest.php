@@ -28,11 +28,22 @@ class StorePaymentRequest extends FormRequest
     public function rules(): array
     {
         $class = $this->resolvePayableClass();
-        $table = $class ? (new $class)->getTable() : 'purchases';
+
+        // When payable_type doesn't resolve, payable_id gets no `exists`
+        // rule at all rather than silently falling back to checking the
+        // "purchases" table — otherwise an invalid type paired with an id
+        // that happens not to exist in "purchases" reports a confusing,
+        // unrelated "payable_id is invalid" error alongside the real
+        // "payable_type is invalid" one.
+        $payableIdRules = ['required', 'integer'];
+
+        if ($class) {
+            $payableIdRules[] = Rule::exists((new $class)->getTable(), 'id');
+        }
 
         return [
             'payable_type' => ['required', 'string', Rule::in(array_keys(Relation::morphMap()))],
-            'payable_id' => ['required', 'integer', Rule::exists($table, 'id')],
+            'payable_id' => $payableIdRules,
             'amount' => [
                 'required',
                 'numeric',
@@ -40,8 +51,14 @@ class StorePaymentRequest extends FormRequest
                 function (string $attribute, mixed $value, Closure $fail) {
                     $payable = $this->resolvePayable();
 
-                    if ($payable && (float) $value > $payable->balanceDue()) {
-                        $fail("The payment amount exceeds the remaining balance due ({$payable->balanceDue()}).");
+                    if (! $payable) {
+                        return;
+                    }
+
+                    $balanceDue = $payable->balanceDue();
+
+                    if ((float) $value > $balanceDue) {
+                        $fail("The payment amount exceeds the remaining balance due ({$balanceDue}).");
                     }
                 },
             ],
