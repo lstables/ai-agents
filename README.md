@@ -75,7 +75,11 @@ Then configure branch protection for `main`:
 
 ## Examples
 
-Simply use `Build <feature> using the feature-delivery playbook. Create/use a GitHub issue, open a PR, run QA and reviewer passes, but do not merge.` or Shorter `Build <feature> using the feature-delivery playbook. Do not merge.`
+Simply use: `Build <feature> using the feature-delivery playbook. Create/use a GitHub issue, open a PR, run QA and reviewer passes, but do not merge.`
+
+Shorter: `Build <feature> using the feature-delivery playbook. Do not merge.`
+
+--
 
 Or use each agent individually:
 
