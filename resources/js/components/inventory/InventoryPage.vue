@@ -1,14 +1,25 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import InventoryItemForm from './InventoryItemForm.vue';
 import InventoryTable from './InventoryTable.vue';
 import type { InventoryItem } from '../../types/inventory';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 type FormMode = { kind: 'create' } | { kind: 'edit'; item: InventoryItem } | null;
 
 const formMode = ref<FormMode>(null);
 const refreshToken = ref(0);
 const confirmation = ref('');
+
+const dialogOpen = computed({
+    get: () => formMode.value !== null,
+    set: (open: boolean) => {
+        if (!open) {
+            formMode.value = null;
+        }
+    },
+});
 
 function startCreate() {
     formMode.value = { kind: 'create' };
@@ -41,30 +52,28 @@ function handleSaved(item: InventoryItem) {
                 <p class="text-sm font-semibold text-cyan-700">Inventory</p>
                 <h2 class="mt-1 text-2xl font-bold text-zinc-950">Inventory items</h2>
             </div>
-            <button
-                v-if="formMode === null"
-                type="button"
-                class="rounded-md bg-zinc-950 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800"
-                @click="startCreate"
-            >
+            <Button type="button" @click="startCreate">
                 New item
-            </button>
+            </Button>
         </div>
 
         <div v-if="confirmation" class="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
             {{ confirmation }}
         </div>
 
-        <div v-if="formMode !== null" class="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
-            <h3 class="mb-4 text-lg font-bold text-zinc-950">
-                {{ formMode.kind === 'create' ? 'New inventory item' : 'Edit inventory item' }}
-            </h3>
-            <InventoryItemForm
-                :item="formMode.kind === 'edit' ? formMode.item : null"
-                @saved="handleSaved"
-                @cancel="closeForm"
-            />
-        </div>
+        <Dialog v-model:open="dialogOpen">
+            <DialogContent class="sm:max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle>{{ formMode?.kind === 'create' ? 'New inventory item' : 'Edit inventory item' }}</DialogTitle>
+                </DialogHeader>
+                <InventoryItemForm
+                    v-if="formMode !== null"
+                    :item="formMode.kind === 'edit' ? formMode.item : null"
+                    @saved="handleSaved"
+                    @cancel="closeForm"
+                />
+            </DialogContent>
+        </Dialog>
 
         <InventoryTable :refresh-token="refreshToken" @edit="startEdit" />
     </div>

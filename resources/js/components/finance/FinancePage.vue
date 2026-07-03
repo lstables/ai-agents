@@ -3,6 +3,8 @@ import { ref } from 'vue';
 import RecordPaymentForm from './RecordPaymentForm.vue';
 import PaymentsTable from './PaymentsTable.vue';
 import type { Payment } from '../../types/finance';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const showForm = ref(false);
 const refreshToken = ref(0);
@@ -26,23 +28,23 @@ function handleCreated(payment: Payment) {
                 <p class="text-sm font-semibold text-cyan-700">Finance</p>
                 <h2 class="mt-1 text-2xl font-bold text-zinc-950">Payments</h2>
             </div>
-            <button
-                type="button"
-                class="rounded-md bg-zinc-950 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800"
-                @click="showForm = !showForm"
-            >
-                {{ showForm ? 'Close' : 'Record payment' }}
-            </button>
+            <Button type="button" @click="showForm = true">
+                Record payment
+            </Button>
         </div>
 
         <div v-if="confirmation" class="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
             {{ confirmation }}
         </div>
 
-        <div v-if="showForm" class="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
-            <h3 class="mb-4 text-lg font-bold text-zinc-950">Record a payment</h3>
-            <RecordPaymentForm @created="handleCreated" @cancel="showForm = false" />
-        </div>
+        <Dialog v-model:open="showForm">
+            <DialogContent class="sm:max-w-lg">
+                <DialogHeader>
+                    <DialogTitle>Record a payment</DialogTitle>
+                </DialogHeader>
+                <RecordPaymentForm @created="handleCreated" @cancel="showForm = false" />
+            </DialogContent>
+        </Dialog>
 
         <PaymentsTable :refresh-token="refreshToken" />
     </div>

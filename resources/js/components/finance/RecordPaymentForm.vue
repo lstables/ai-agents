@@ -1,10 +1,15 @@
 <script setup lang="ts">
-import { reactive, ref, watch } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import { createPayment, searchPayableOrders } from '../../api/finance';
 import { ApiValidationError } from '../../api/client';
 import { PAYABLE_TYPES, PAYABLE_TYPE_LABELS } from '../../types/finance';
 import type { NewPaymentInput, PayableOption, Payment } from '../../types/finance';
 import type { ValidationErrors } from '../../types/purchases';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const emit = defineEmits<{ created: [payment: Payment]; cancel: [] }>();
 
@@ -30,6 +35,13 @@ function emptyForm(): NewPaymentInput {
 }
 
 const form = reactive<NewPaymentInput>(emptyForm());
+
+const payableTypeModel = computed<string>({
+    get: () => form.payable_type,
+    set: (value: string) => {
+        form.payable_type = value as NewPaymentInput['payable_type'];
+    },
+});
 
 let searchDebounce: ReturnType<typeof setTimeout> | undefined;
 
@@ -102,49 +114,49 @@ async function submit() {
         </div>
 
         <div>
-            <label class="block text-sm font-semibold text-zinc-800" for="payable_type">Order type</label>
-            <select
-                id="payable_type"
-                v-model="form.payable_type"
-                class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-            >
-                <option value="" disabled>Select order type</option>
-                <option v-for="type in PAYABLE_TYPES" :key="type" :value="type">
-                    {{ PAYABLE_TYPE_LABELS[type] }}
-                </option>
-            </select>
-            <p v-if="fieldError('payable_type')" class="mt-1 text-xs font-medium text-rose-700">
+            <Label for="payable_type">Order type</Label>
+            <Select v-model="payableTypeModel">
+                <SelectTrigger id="payable_type" class="mt-1 w-full">
+                    <SelectValue placeholder="Select order type" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem v-for="type in PAYABLE_TYPES" :key="type" :value="type">
+                        {{ PAYABLE_TYPE_LABELS[type] }}
+                    </SelectItem>
+                </SelectContent>
+            </Select>
+            <p v-if="fieldError('payable_type')" class="mt-1 text-xs font-medium text-destructive">
                 {{ fieldError('payable_type') }}
             </p>
         </div>
 
         <div v-if="form.payable_type">
-            <div v-if="selectedOrder" class="flex items-center justify-between rounded-md border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm">
+            <div v-if="selectedOrder" class="flex items-center justify-between rounded-md border bg-muted/50 px-3 py-2 text-sm">
                 <span>
                     <span class="font-semibold text-zinc-900">{{ selectedOrder.reference }}</span>
                     — balance due: <span class="font-semibold">{{ selectedOrder.balance_due.toFixed(2) }}</span>
                 </span>
-                <button type="button" class="text-xs font-semibold text-cyan-700 hover:underline" @click="changeOrder">
+                <Button type="button" variant="link" size="sm" class="h-auto p-0 text-cyan-700" @click="changeOrder">
                     Change
-                </button>
+                </Button>
             </div>
             <div v-else>
-                <label class="block text-sm font-semibold text-zinc-800" for="order_search">Search by reference</label>
-                <input
+                <Label for="order_search">Search by reference</Label>
+                <Input
                     id="order_search"
                     v-model="orderSearch"
                     type="text"
                     placeholder="Type a reference…"
-                    class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-                >
-                <p v-if="orderSearchState === 'error'" class="mt-1 text-xs font-medium text-rose-700">
+                    class="mt-1"
+                />
+                <p v-if="orderSearchState === 'error'" class="mt-1 text-xs font-medium text-destructive">
                     Could not search orders.
                 </p>
-                <ul v-if="orderResults.length > 0" class="mt-2 divide-y divide-zinc-100 rounded-md border border-zinc-200">
+                <ul v-if="orderResults.length > 0" class="mt-2 divide-y divide-border rounded-md border">
                     <li v-for="order in orderResults" :key="order.id">
                         <button
                             type="button"
-                            class="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-zinc-50"
+                            class="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-muted"
                             @click="selectOrder(order)"
                         >
                             <span class="font-semibold text-zinc-900">{{ order.reference }}</span>
@@ -153,35 +165,23 @@ async function submit() {
                     </li>
                 </ul>
             </div>
-            <p v-if="fieldError('payable_id')" class="mt-1 text-xs font-medium text-rose-700">
+            <p v-if="fieldError('payable_id')" class="mt-1 text-xs font-medium text-destructive">
                 {{ fieldError('payable_id') }}
             </p>
         </div>
 
         <div class="grid gap-4 sm:grid-cols-2">
             <div>
-                <label class="block text-sm font-semibold text-zinc-800" for="amount">Amount</label>
-                <input
-                    id="amount"
-                    v-model="form.amount"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-                >
-                <p v-if="fieldError('amount')" class="mt-1 text-xs font-medium text-rose-700">
+                <Label for="amount">Amount</Label>
+                <Input id="amount" v-model="form.amount" type="number" min="0" step="0.01" class="mt-1" />
+                <p v-if="fieldError('amount')" class="mt-1 text-xs font-medium text-destructive">
                     {{ fieldError('amount') }}
                 </p>
             </div>
             <div>
-                <label class="block text-sm font-semibold text-zinc-800" for="payment_date">Payment date</label>
-                <input
-                    id="payment_date"
-                    v-model="form.payment_date"
-                    type="date"
-                    class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-                >
-                <p v-if="fieldError('payment_date')" class="mt-1 text-xs font-medium text-rose-700">
+                <Label for="payment_date">Payment date</Label>
+                <Input id="payment_date" v-model="form.payment_date" type="date" class="mt-1" />
+                <p v-if="fieldError('payment_date')" class="mt-1 text-xs font-medium text-destructive">
                     {{ fieldError('payment_date') }}
                 </p>
             </div>
@@ -189,60 +189,36 @@ async function submit() {
 
         <div class="grid gap-4 sm:grid-cols-2">
             <div>
-                <label class="block text-sm font-semibold text-zinc-800" for="method">Method</label>
-                <input
-                    id="method"
-                    v-model="form.method"
-                    type="text"
-                    placeholder="bank_transfer"
-                    class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-                >
-                <p v-if="fieldError('method')" class="mt-1 text-xs font-medium text-rose-700">
+                <Label for="method">Method</Label>
+                <Input id="method" v-model="form.method" type="text" placeholder="bank_transfer" class="mt-1" />
+                <p v-if="fieldError('method')" class="mt-1 text-xs font-medium text-destructive">
                     {{ fieldError('method') }}
                 </p>
             </div>
             <div>
-                <label class="block text-sm font-semibold text-zinc-800" for="reference">Reference</label>
-                <input
-                    id="reference"
-                    v-model="form.reference"
-                    type="text"
-                    class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-                >
-                <p v-if="fieldError('reference')" class="mt-1 text-xs font-medium text-rose-700">
+                <Label for="reference">Reference</Label>
+                <Input id="reference" v-model="form.reference" type="text" class="mt-1" />
+                <p v-if="fieldError('reference')" class="mt-1 text-xs font-medium text-destructive">
                     {{ fieldError('reference') }}
                 </p>
             </div>
         </div>
 
         <div>
-            <label class="block text-sm font-semibold text-zinc-800" for="notes">Notes</label>
-            <textarea
-                id="notes"
-                v-model="form.notes"
-                rows="2"
-                class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-            />
-            <p v-if="fieldError('notes')" class="mt-1 text-xs font-medium text-rose-700">
+            <Label for="notes">Notes</Label>
+            <Textarea id="notes" v-model="form.notes" rows="2" class="mt-1" />
+            <p v-if="fieldError('notes')" class="mt-1 text-xs font-medium text-destructive">
                 {{ fieldError('notes') }}
             </p>
         </div>
 
-        <div class="flex items-center justify-end gap-2 border-t border-zinc-200 pt-4">
-            <button
-                type="button"
-                class="rounded-md border border-zinc-300 px-4 py-2 text-sm font-semibold text-zinc-700 hover:bg-zinc-50"
-                @click="emit('cancel')"
-            >
+        <div class="flex items-center justify-end gap-2 border-t pt-4">
+            <Button type="button" variant="outline" @click="emit('cancel')">
                 Cancel
-            </button>
-            <button
-                type="submit"
-                class="rounded-md bg-zinc-950 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800 disabled:opacity-50"
-                :disabled="submitState === 'submitting' || !form.payable_id"
-            >
+            </Button>
+            <Button type="submit" :disabled="submitState === 'submitting' || !form.payable_id">
                 {{ submitState === 'submitting' ? 'Saving…' : 'Record payment' }}
-            </button>
+            </Button>
         </div>
     </form>
 </template>

@@ -8,8 +8,15 @@ import type { ValidationErrors } from '../../types/purchases';
 import type { Customer } from '../../types/customers';
 import type { InventoryItem } from '../../types/inventory';
 import type { NewSalesOrderInput, SalesOrder } from '../../types/sales-orders';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const emit = defineEmits<{ created: [salesOrder: SalesOrder] }>();
+
+const FREE_TEXT_ITEM = 'free_text';
 
 const customers = ref<Customer[]>([]);
 const customersState = ref<'loading' | 'ready' | 'error'>('loading');
@@ -29,6 +36,13 @@ const form = reactive<NewSalesOrderInput>({
     expected_date: '',
     notes: '',
     items: [emptyItem()],
+});
+
+const customerIdModel = computed<string>({
+    get: () => (form.customer_id === '' ? '' : String(form.customer_id)),
+    set: (value: string) => {
+        form.customer_id = value === '' ? '' : Number(value);
+    },
 });
 
 const runningTotal = computed(() =>
@@ -77,6 +91,16 @@ function removeItem(index: number) {
     if (form.items.length > 1) {
         form.items.splice(index, 1);
     }
+}
+
+function inventoryItemValue(index: number): string {
+    const value = form.items[index].inventory_item_id;
+    return value === '' ? FREE_TEXT_ITEM : String(value);
+}
+
+function setInventoryItem(index: number, value: string) {
+    form.items[index].inventory_item_id = value === FREE_TEXT_ITEM ? '' : Number(value);
+    applyInventoryItem(index);
 }
 
 function applyInventoryItem(index: number) {
@@ -130,48 +154,37 @@ async function submit() {
 
         <div class="grid gap-4 sm:grid-cols-2">
             <div>
-                <label class="block text-sm font-semibold text-zinc-800" for="customer_id">Customer</label>
-                <select
-                    id="customer_id"
-                    v-model="form.customer_id"
-                    class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-                    :disabled="customersState === 'loading'"
-                >
-                    <option value="" disabled>Select a customer</option>
-                    <option v-for="customer in customers" :key="customer.id" :value="customer.id">
-                        {{ customer.name }}
-                    </option>
-                </select>
-                <p v-if="customersState === 'error'" class="mt-1 text-xs font-medium text-rose-700">
+                <Label for="customer_id">Customer</Label>
+                <Select v-model="customerIdModel" :disabled="customersState === 'loading'">
+                    <SelectTrigger id="customer_id" class="mt-1 w-full">
+                        <SelectValue placeholder="Select a customer" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem v-for="customer in customers" :key="customer.id" :value="String(customer.id)">
+                            {{ customer.name }}
+                        </SelectItem>
+                    </SelectContent>
+                </Select>
+                <p v-if="customersState === 'error'" class="mt-1 text-xs font-medium text-destructive">
                     Could not load customers.
                 </p>
-                <p v-if="fieldError('customer_id')" class="mt-1 text-xs font-medium text-rose-700">
+                <p v-if="fieldError('customer_id')" class="mt-1 text-xs font-medium text-destructive">
                     {{ fieldError('customer_id') }}
                 </p>
             </div>
 
             <div class="grid grid-cols-2 gap-3">
                 <div>
-                    <label class="block text-sm font-semibold text-zinc-800" for="order_date">Order date</label>
-                    <input
-                        id="order_date"
-                        v-model="form.order_date"
-                        type="date"
-                        class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-                    >
-                    <p v-if="fieldError('order_date')" class="mt-1 text-xs font-medium text-rose-700">
+                    <Label for="order_date">Order date</Label>
+                    <Input id="order_date" v-model="form.order_date" type="date" class="mt-1" />
+                    <p v-if="fieldError('order_date')" class="mt-1 text-xs font-medium text-destructive">
                         {{ fieldError('order_date') }}
                     </p>
                 </div>
                 <div>
-                    <label class="block text-sm font-semibold text-zinc-800" for="expected_date">Expected date</label>
-                    <input
-                        id="expected_date"
-                        v-model="form.expected_date"
-                        type="date"
-                        class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-                    >
-                    <p v-if="fieldError('expected_date')" class="mt-1 text-xs font-medium text-rose-700">
+                    <Label for="expected_date">Expected date</Label>
+                    <Input id="expected_date" v-model="form.expected_date" type="date" class="mt-1" />
+                    <p v-if="fieldError('expected_date')" class="mt-1 text-xs font-medium text-destructive">
                         {{ fieldError('expected_date') }}
                     </p>
                 </div>
@@ -179,14 +192,9 @@ async function submit() {
         </div>
 
         <div>
-            <label class="block text-sm font-semibold text-zinc-800" for="notes">Notes</label>
-            <textarea
-                id="notes"
-                v-model="form.notes"
-                rows="2"
-                class="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-            />
-            <p v-if="fieldError('notes')" class="mt-1 text-xs font-medium text-rose-700">
+            <Label for="notes">Notes</Label>
+            <Textarea id="notes" v-model="form.notes" rows="2" class="mt-1" />
+            <p v-if="fieldError('notes')" class="mt-1 text-xs font-medium text-destructive">
                 {{ fieldError('notes') }}
             </p>
         </div>
@@ -194,13 +202,9 @@ async function submit() {
         <div>
             <div class="flex items-center justify-between">
                 <span class="block text-sm font-semibold text-zinc-800">Line items</span>
-                <button
-                    type="button"
-                    class="rounded-md border border-zinc-300 px-2 py-1 text-xs font-semibold text-zinc-700 hover:bg-zinc-50"
-                    @click="addItem"
-                >
+                <Button type="button" variant="outline" size="sm" @click="addItem">
                     Add item
-                </button>
+                </Button>
             </div>
 
             <div class="mt-2 space-y-2">
@@ -210,55 +214,40 @@ async function submit() {
                     class="grid grid-cols-[160px_1fr_90px_110px_32px] items-start gap-2"
                 >
                     <div>
-                        <select
-                            v-model="item.inventory_item_id"
-                            class="w-full rounded-md border border-zinc-300 px-2 py-2 text-sm"
+                        <Select
+                            :model-value="inventoryItemValue(index)"
                             :disabled="inventoryItemsState === 'loading'"
-                            @change="applyInventoryItem(index)"
+                            @update:model-value="(value) => setInventoryItem(index, String(value))"
                         >
-                            <option value="">Free-text item</option>
-                            <option v-for="inventoryItem in inventoryItems" :key="inventoryItem.id" :value="inventoryItem.id">
-                                {{ inventoryItem.sku }}
-                            </option>
-                        </select>
-                        <p v-if="fieldError(`items.${index}.inventory_item_id`)" class="mt-1 text-xs font-medium text-rose-700">
+                            <SelectTrigger class="w-full">
+                                <SelectValue placeholder="Free-text item" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem :value="FREE_TEXT_ITEM">Free-text item</SelectItem>
+                                <SelectItem v-for="inventoryItem in inventoryItems" :key="inventoryItem.id" :value="String(inventoryItem.id)">
+                                    {{ inventoryItem.sku }}
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <p v-if="fieldError(`items.${index}.inventory_item_id`)" class="mt-1 text-xs font-medium text-destructive">
                             {{ fieldError(`items.${index}.inventory_item_id`) }}
                         </p>
                     </div>
                     <div>
-                        <input
-                            v-model="item.description"
-                            type="text"
-                            placeholder="Description"
-                            class="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-                        >
-                        <p v-if="fieldError(`items.${index}.description`)" class="mt-1 text-xs font-medium text-rose-700">
+                        <Input v-model="item.description" type="text" placeholder="Description" />
+                        <p v-if="fieldError(`items.${index}.description`)" class="mt-1 text-xs font-medium text-destructive">
                             {{ fieldError(`items.${index}.description`) }}
                         </p>
                     </div>
                     <div>
-                        <input
-                            v-model="item.quantity"
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            placeholder="Qty"
-                            class="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-                        >
-                        <p v-if="fieldError(`items.${index}.quantity`)" class="mt-1 text-xs font-medium text-rose-700">
+                        <Input v-model="item.quantity" type="number" step="0.01" min="0" placeholder="Qty" />
+                        <p v-if="fieldError(`items.${index}.quantity`)" class="mt-1 text-xs font-medium text-destructive">
                             {{ fieldError(`items.${index}.quantity`) }}
                         </p>
                     </div>
                     <div>
-                        <input
-                            v-model="item.unit_price"
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            placeholder="Unit price"
-                            class="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-                        >
-                        <p v-if="fieldError(`items.${index}.unit_price`)" class="mt-1 text-xs font-medium text-rose-700">
+                        <Input v-model="item.unit_price" type="number" step="0.01" min="0" placeholder="Unit price" />
+                        <p v-if="fieldError(`items.${index}.unit_price`)" class="mt-1 text-xs font-medium text-destructive">
                             {{ fieldError(`items.${index}.unit_price`) }}
                         </p>
                     </div>
@@ -274,22 +263,18 @@ async function submit() {
                 </div>
             </div>
 
-            <p v-if="fieldError('items')" class="mt-1 text-xs font-medium text-rose-700">
+            <p v-if="fieldError('items')" class="mt-1 text-xs font-medium text-destructive">
                 {{ fieldError('items') }}
             </p>
         </div>
 
-        <div class="flex items-center justify-between border-t border-zinc-200 pt-4">
+        <div class="flex items-center justify-between border-t pt-4">
             <p class="text-sm font-semibold text-zinc-800">
                 Total: <span class="font-bold">{{ runningTotal.toFixed(2) }}</span>
             </p>
-            <button
-                type="submit"
-                class="rounded-md bg-zinc-950 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800 disabled:opacity-50"
-                :disabled="submitState === 'submitting'"
-            >
+            <Button type="submit" :disabled="submitState === 'submitting'">
                 {{ submitState === 'submitting' ? 'Saving…' : 'Create sales order' }}
-            </button>
+            </Button>
         </div>
     </form>
 </template>

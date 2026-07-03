@@ -4,6 +4,19 @@ import { deleteSupplier, fetchSuppliers } from '../../api/suppliers';
 import { ApiError } from '../../api/client';
 import type { PaginationMeta, Supplier } from '../../types/purchases';
 import type { SupplierFilters } from '../../types/suppliers';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const props = defineProps<{ refreshToken: number }>();
 const emit = defineEmits<{ edit: [supplier: Supplier] }>();
@@ -14,6 +27,7 @@ const loadState = ref<'loading' | 'ready' | 'error'>('loading');
 const errorMessage = ref('');
 const deletingId = ref<number | null>(null);
 const deleteError = ref('');
+const supplierPendingDelete = ref<Supplier | null>(null);
 
 const filters = reactive<SupplierFilters>({
     search: '',
@@ -56,8 +70,14 @@ function goToPage(page: number) {
     load();
 }
 
-async function remove(supplier: Supplier) {
-    if (!confirm(`Delete supplier "${supplier.name}"? This cannot be undone.`)) {
+function requestDelete(supplier: Supplier) {
+    supplierPendingDelete.value = supplier;
+}
+
+async function confirmDelete() {
+    const supplier = supplierPendingDelete.value;
+
+    if (!supplier) {
         return;
     }
 
@@ -82,12 +102,12 @@ async function remove(supplier: Supplier) {
         <div class="flex flex-col gap-3 border-b border-zinc-200 px-5 py-4 md:flex-row md:items-center md:justify-between">
             <h3 class="text-lg font-bold text-zinc-950">Suppliers</h3>
 
-            <input
+            <Input
                 v-model="filters.search"
                 type="search"
                 placeholder="Search name or email"
-                class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
-            >
+                class="md:w-64"
+            />
         </div>
 
         <div v-if="deleteError" class="border-b border-rose-200 bg-rose-50 px-5 py-2 text-sm text-rose-800">
@@ -106,44 +126,40 @@ async function remove(supplier: Supplier) {
             No suppliers match this search.
         </div>
 
-        <div v-else class="overflow-x-auto">
-            <table class="w-full text-left text-sm">
-                <thead class="border-b border-zinc-200 text-xs font-semibold uppercase tracking-normal text-zinc-500">
-                    <tr>
-                        <th class="px-5 py-3">Name</th>
-                        <th class="px-5 py-3">Email</th>
-                        <th class="px-5 py-3">Phone</th>
-                        <th class="px-5 py-3 text-right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-zinc-100">
-                    <tr v-for="supplier in suppliers" :key="supplier.id">
-                        <td class="px-5 py-3 font-semibold text-zinc-900">{{ supplier.name }}</td>
-                        <td class="px-5 py-3 text-zinc-700">{{ supplier.email ?? '—' }}</td>
-                        <td class="px-5 py-3 text-zinc-700">{{ supplier.phone ?? '—' }}</td>
-                        <td class="px-5 py-3 text-right">
-                            <div class="flex justify-end gap-2">
-                                <button
-                                    type="button"
-                                    class="rounded-md border border-zinc-300 px-3 py-1 text-xs font-semibold text-zinc-700 hover:bg-zinc-50"
-                                    @click="emit('edit', supplier)"
-                                >
-                                    Edit
-                                </button>
-                                <button
-                                    type="button"
-                                    class="rounded-md border border-rose-200 px-3 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-50"
-                                    :disabled="deletingId === supplier.id"
-                                    @click="remove(supplier)"
-                                >
-                                    {{ deletingId === supplier.id ? 'Deleting…' : 'Delete' }}
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+        <Table v-else>
+            <TableHeader>
+                <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Phone</TableHead>
+                    <TableHead class="text-right">Actions</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                <TableRow v-for="supplier in suppliers" :key="supplier.id">
+                    <TableCell class="font-semibold text-zinc-900">{{ supplier.name }}</TableCell>
+                    <TableCell>{{ supplier.email ?? '—' }}</TableCell>
+                    <TableCell>{{ supplier.phone ?? '—' }}</TableCell>
+                    <TableCell class="text-right">
+                        <div class="flex justify-end gap-2">
+                            <Button type="button" variant="outline" size="sm" @click="emit('edit', supplier)">
+                                Edit
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                class="border-rose-200 text-rose-700 hover:bg-rose-50"
+                                :disabled="deletingId === supplier.id"
+                                @click="requestDelete(supplier)"
+                            >
+                                {{ deletingId === supplier.id ? 'Deleting…' : 'Delete' }}
+                            </Button>
+                        </div>
+                    </TableCell>
+                </TableRow>
+            </TableBody>
+        </Table>
 
         <div
             v-if="meta && meta.last_page > 1"
@@ -151,23 +167,42 @@ async function remove(supplier: Supplier) {
         >
             <span>Page {{ meta.current_page }} of {{ meta.last_page }} ({{ meta.total }} total)</span>
             <div class="flex gap-2">
-                <button
+                <Button
                     type="button"
-                    class="rounded-md border border-zinc-300 px-3 py-1 font-semibold hover:bg-zinc-50 disabled:opacity-40"
+                    variant="outline"
+                    size="sm"
                     :disabled="meta.current_page <= 1"
                     @click="goToPage(meta.current_page - 1)"
                 >
                     Previous
-                </button>
-                <button
+                </Button>
+                <Button
                     type="button"
-                    class="rounded-md border border-zinc-300 px-3 py-1 font-semibold hover:bg-zinc-50 disabled:opacity-40"
+                    variant="outline"
+                    size="sm"
                     :disabled="meta.current_page >= meta.last_page"
                     @click="goToPage(meta.current_page + 1)"
                 >
                     Next
-                </button>
+                </Button>
             </div>
         </div>
+
+        <AlertDialog :open="supplierPendingDelete !== null" @update:open="(open) => { if (!open) supplierPendingDelete = null; }">
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Delete supplier?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Delete supplier "{{ supplierPendingDelete?.name }}"? This cannot be undone.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction variant="destructive" @click="confirmDelete">
+                        Delete
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     </div>
 </template>

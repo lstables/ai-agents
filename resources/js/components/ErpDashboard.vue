@@ -8,6 +8,7 @@ import CustomersPage from './customers/CustomersPage.vue';
 import SalesOrdersPage from './sales-orders/SalesOrdersPage.vue';
 import ReportsPage from './reports/ReportsPage.vue';
 import FinancePage from './finance/FinancePage.vue';
+import { Button } from '@/components/ui/button';
 
 const modules = [
     'Purchasing',
@@ -64,12 +65,12 @@ function showDashboard() {
                             <h2 class="mt-1 text-2xl font-bold text-zinc-950">Operational dashboard</h2>
                         </div>
                         <div class="flex flex-wrap gap-2">
-                            <button class="rounded-md bg-zinc-950 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800">
+                            <Button type="button">
                                 New feature brief
-                            </button>
-                            <button class="rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-800 hover:bg-zinc-50">
+                            </Button>
+                            <Button type="button" variant="outline">
                                 View agent tasks
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 </header>

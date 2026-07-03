@@ -4,6 +4,22 @@ import { deleteInventoryItem, fetchInventoryItems } from '../../api/inventory';
 import { ApiError } from '../../api/client';
 import type { PaginationMeta } from '../../types/purchases';
 import type { InventoryItem, InventoryItemFilters } from '../../types/inventory';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const props = defineProps<{ refreshToken: number }>();
 const emit = defineEmits<{ edit: [item: InventoryItem] }>();
@@ -14,6 +30,7 @@ const loadState = ref<'loading' | 'ready' | 'error'>('loading');
 const errorMessage = ref('');
 const deletingId = ref<number | null>(null);
 const deleteError = ref('');
+const itemPendingDelete = ref<InventoryItem | null>(null);
 
 const filters = reactive<InventoryItemFilters>({
     search: '',
@@ -61,8 +78,14 @@ function goToPage(page: number) {
     load();
 }
 
-async function remove(item: InventoryItem) {
-    if (!confirm(`Delete inventory item "${item.name}"? This cannot be undone.`)) {
+function requestDelete(item: InventoryItem) {
+    itemPendingDelete.value = item;
+}
+
+async function confirmDelete() {
+    const item = itemPendingDelete.value;
+
+    if (!item) {
         return;
     }
 
@@ -88,16 +111,16 @@ async function remove(item: InventoryItem) {
             <h3 class="text-lg font-bold text-zinc-950">Inventory</h3>
 
             <div class="flex flex-wrap items-center gap-3">
-                <label class="flex items-center gap-2 text-sm font-medium text-zinc-700">
-                    <input v-model="filters.belowReorderLevel" type="checkbox" class="rounded border-zinc-300">
+                <Label class="flex items-center gap-2 text-sm font-medium text-zinc-700">
+                    <Checkbox v-model:checked="filters.belowReorderLevel" />
                     Below reorder level
-                </label>
-                <input
+                </Label>
+                <Input
                     v-model="filters.search"
                     type="search"
                     placeholder="Search name or SKU"
-                    class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
-                >
+                    class="md:w-56"
+                />
             </div>
         </div>
 
@@ -117,58 +140,51 @@ async function remove(item: InventoryItem) {
             No inventory items match these filters.
         </div>
 
-        <div v-else class="overflow-x-auto">
-            <table class="w-full text-left text-sm">
-                <thead class="border-b border-zinc-200 text-xs font-semibold uppercase tracking-normal text-zinc-500">
-                    <tr>
-                        <th class="px-5 py-3">SKU</th>
-                        <th class="px-5 py-3">Name</th>
-                        <th class="px-5 py-3 text-right">Quantity</th>
-                        <th class="px-5 py-3 text-right">Reorder level</th>
-                        <th class="px-5 py-3">Unit</th>
-                        <th class="px-5 py-3">Supplier</th>
-                        <th class="px-5 py-3 text-right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-zinc-100">
-                    <tr v-for="item in items" :key="item.id" :class="{ 'bg-amber-50': item.is_below_reorder_level }">
-                        <td class="px-5 py-3 font-semibold text-zinc-900">{{ item.sku }}</td>
-                        <td class="px-5 py-3 text-zinc-700">{{ item.name }}</td>
-                        <td class="px-5 py-3 text-right text-zinc-700">
-                            {{ item.quantity_on_hand }}
-                            <span
-                                v-if="item.is_below_reorder_level"
-                                class="ml-1 rounded-md border border-amber-200 bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900"
+        <Table v-else>
+            <TableHeader>
+                <TableRow>
+                    <TableHead>SKU</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead class="text-right">Quantity</TableHead>
+                    <TableHead class="text-right">Reorder level</TableHead>
+                    <TableHead>Unit</TableHead>
+                    <TableHead>Supplier</TableHead>
+                    <TableHead class="text-right">Actions</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                <TableRow v-for="item in items" :key="item.id" :class="{ 'bg-amber-50': item.is_below_reorder_level }">
+                    <TableCell class="font-semibold text-zinc-900">{{ item.sku }}</TableCell>
+                    <TableCell>{{ item.name }}</TableCell>
+                    <TableCell class="text-right">
+                        {{ item.quantity_on_hand }}
+                        <Badge v-if="item.is_below_reorder_level" variant="outline" class="ml-1 border-amber-200 bg-amber-100 text-amber-900">
+                            Low
+                        </Badge>
+                    </TableCell>
+                    <TableCell class="text-right">{{ item.reorder_level ?? '—' }}</TableCell>
+                    <TableCell>{{ item.unit ?? '—' }}</TableCell>
+                    <TableCell>{{ item.supplier?.name ?? '—' }}</TableCell>
+                    <TableCell class="text-right">
+                        <div class="flex justify-end gap-2">
+                            <Button type="button" variant="outline" size="sm" @click="emit('edit', item)">
+                                Edit
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                class="border-rose-200 text-rose-700 hover:bg-rose-50"
+                                :disabled="deletingId === item.id"
+                                @click="requestDelete(item)"
                             >
-                                Low
-                            </span>
-                        </td>
-                        <td class="px-5 py-3 text-right text-zinc-700">{{ item.reorder_level ?? '—' }}</td>
-                        <td class="px-5 py-3 text-zinc-700">{{ item.unit ?? '—' }}</td>
-                        <td class="px-5 py-3 text-zinc-700">{{ item.supplier?.name ?? '—' }}</td>
-                        <td class="px-5 py-3 text-right">
-                            <div class="flex justify-end gap-2">
-                                <button
-                                    type="button"
-                                    class="rounded-md border border-zinc-300 px-3 py-1 text-xs font-semibold text-zinc-700 hover:bg-zinc-50"
-                                    @click="emit('edit', item)"
-                                >
-                                    Edit
-                                </button>
-                                <button
-                                    type="button"
-                                    class="rounded-md border border-rose-200 px-3 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-50"
-                                    :disabled="deletingId === item.id"
-                                    @click="remove(item)"
-                                >
-                                    {{ deletingId === item.id ? 'Deleting…' : 'Delete' }}
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+                                {{ deletingId === item.id ? 'Deleting…' : 'Delete' }}
+                            </Button>
+                        </div>
+                    </TableCell>
+                </TableRow>
+            </TableBody>
+        </Table>
 
         <div
             v-if="meta && meta.last_page > 1"
@@ -176,23 +192,42 @@ async function remove(item: InventoryItem) {
         >
             <span>Page {{ meta.current_page }} of {{ meta.last_page }} ({{ meta.total }} total)</span>
             <div class="flex gap-2">
-                <button
+                <Button
                     type="button"
-                    class="rounded-md border border-zinc-300 px-3 py-1 font-semibold hover:bg-zinc-50 disabled:opacity-40"
+                    variant="outline"
+                    size="sm"
                     :disabled="meta.current_page <= 1"
                     @click="goToPage(meta.current_page - 1)"
                 >
                     Previous
-                </button>
-                <button
+                </Button>
+                <Button
                     type="button"
-                    class="rounded-md border border-zinc-300 px-3 py-1 font-semibold hover:bg-zinc-50 disabled:opacity-40"
+                    variant="outline"
+                    size="sm"
                     :disabled="meta.current_page >= meta.last_page"
                     @click="goToPage(meta.current_page + 1)"
                 >
                     Next
-                </button>
+                </Button>
             </div>
         </div>
+
+        <AlertDialog :open="itemPendingDelete !== null" @update:open="(open) => { if (!open) itemPendingDelete = null; }">
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Delete inventory item?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Delete inventory item "{{ itemPendingDelete?.name }}"? This cannot be undone.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction variant="destructive" @click="confirmDelete">
+                        Delete
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     </div>
 </template>
