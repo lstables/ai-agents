@@ -1,11 +1,17 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { fetchPayments } from '../../api/finance';
 import { PAYABLE_TYPES, PAYABLE_TYPE_LABELS } from '../../types/finance';
 import type { PaginationMeta } from '../../types/purchases';
 import type { Payment, PaymentFilters } from '../../types/finance';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 const props = defineProps<{ refreshToken: number }>();
+
+const ALL_TYPES = 'all';
 
 const payments = ref<Payment[]>([]);
 const meta = ref<PaginationMeta | null>(null);
@@ -17,6 +23,13 @@ const filters = reactive<PaymentFilters>({
     search: '',
     page: 1,
     perPage: 10,
+});
+
+const payableTypeModel = computed<string>({
+    get: () => (filters.payableType === '' ? ALL_TYPES : filters.payableType),
+    set: (value) => {
+        filters.payableType = value === ALL_TYPES ? '' : (value as PaymentFilters['payableType']);
+    },
 });
 
 let searchDebounce: ReturnType<typeof setTimeout> | undefined;
@@ -65,18 +78,23 @@ function goToPage(page: number) {
             <h3 class="text-lg font-bold text-zinc-950">Payments</h3>
 
             <div class="flex flex-wrap gap-2">
-                <input
+                <Input
                     v-model="filters.search"
                     type="search"
                     placeholder="Search reference or order"
-                    class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
-                >
-                <select v-model="filters.payableType" class="rounded-md border border-zinc-300 px-3 py-2 text-sm">
-                    <option value="">All types</option>
-                    <option v-for="type in PAYABLE_TYPES" :key="type" :value="type">
-                        {{ PAYABLE_TYPE_LABELS[type] }}
-                    </option>
-                </select>
+                    class="w-56"
+                />
+                <Select v-model="payableTypeModel">
+                    <SelectTrigger class="w-40">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem :value="ALL_TYPES">All types</SelectItem>
+                        <SelectItem v-for="type in PAYABLE_TYPES" :key="type" :value="type">
+                            {{ PAYABLE_TYPE_LABELS[type] }}
+                        </SelectItem>
+                    </SelectContent>
+                </Select>
             </div>
         </div>
 
@@ -92,30 +110,28 @@ function goToPage(page: number) {
             No payments match these filters.
         </div>
 
-        <div v-else class="overflow-x-auto">
-            <table class="w-full text-left text-sm">
-                <thead class="border-b border-zinc-200 text-xs font-semibold uppercase tracking-normal text-zinc-500">
-                    <tr>
-                        <th class="px-5 py-3">Order</th>
-                        <th class="px-5 py-3">Type</th>
-                        <th class="px-5 py-3">Date</th>
-                        <th class="px-5 py-3">Method</th>
-                        <th class="px-5 py-3 text-right">Amount</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-zinc-100">
-                    <tr v-for="payment in payments" :key="payment.id">
-                        <td class="px-5 py-3 font-semibold text-zinc-900">{{ payment.payable?.reference ?? '—' }}</td>
-                        <td class="px-5 py-3 text-zinc-700">
-                            {{ payment.payable ? PAYABLE_TYPE_LABELS[payment.payable.type] : '—' }}
-                        </td>
-                        <td class="px-5 py-3 text-zinc-700">{{ payment.payment_date }}</td>
-                        <td class="px-5 py-3 text-zinc-700">{{ payment.method ?? '—' }}</td>
-                        <td class="px-5 py-3 text-right font-semibold text-zinc-900">{{ payment.amount.toFixed(2) }}</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+        <Table v-else>
+            <TableHeader>
+                <TableRow>
+                    <TableHead>Order</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Method</TableHead>
+                    <TableHead class="text-right">Amount</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                <TableRow v-for="payment in payments" :key="payment.id">
+                    <TableCell class="font-semibold text-zinc-900">{{ payment.payable?.reference ?? '—' }}</TableCell>
+                    <TableCell>
+                        {{ payment.payable ? PAYABLE_TYPE_LABELS[payment.payable.type] : '—' }}
+                    </TableCell>
+                    <TableCell>{{ payment.payment_date }}</TableCell>
+                    <TableCell>{{ payment.method ?? '—' }}</TableCell>
+                    <TableCell class="text-right font-semibold text-zinc-900">{{ payment.amount.toFixed(2) }}</TableCell>
+                </TableRow>
+            </TableBody>
+        </Table>
 
         <div
             v-if="meta && meta.last_page > 1"
@@ -123,22 +139,24 @@ function goToPage(page: number) {
         >
             <span>Page {{ meta.current_page }} of {{ meta.last_page }} ({{ meta.total }} total)</span>
             <div class="flex gap-2">
-                <button
+                <Button
                     type="button"
-                    class="rounded-md border border-zinc-300 px-3 py-1 font-semibold hover:bg-zinc-50 disabled:opacity-40"
+                    variant="outline"
+                    size="sm"
                     :disabled="meta.current_page <= 1"
                     @click="goToPage(meta.current_page - 1)"
                 >
                     Previous
-                </button>
-                <button
+                </Button>
+                <Button
                     type="button"
-                    class="rounded-md border border-zinc-300 px-3 py-1 font-semibold hover:bg-zinc-50 disabled:opacity-40"
+                    variant="outline"
+                    size="sm"
                     :disabled="meta.current_page >= meta.last_page"
                     @click="goToPage(meta.current_page + 1)"
                 >
                     Next
-                </button>
+                </Button>
             </div>
         </div>
     </div>
