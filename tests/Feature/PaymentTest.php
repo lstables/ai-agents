@@ -149,6 +149,60 @@ class PaymentTest extends TestCase
         $this->assertEquals(80.0, $purchase->fresh()->amountPaid());
     }
 
+    public function test_any_payment_on_a_fully_paid_order_is_rejected(): void
+    {
+        $purchase = Purchase::factory()->create(['total_amount' => 50]);
+
+        $this->postJson('/api/payments', [
+            'payable_type' => 'purchase', 'payable_id' => $purchase->id,
+            'amount' => 50, 'payment_date' => now()->toDateString(),
+        ])->assertStatus(201);
+
+        $response = $this->postJson('/api/payments', [
+            'payable_type' => 'purchase', 'payable_id' => $purchase->id,
+            'amount' => 0.01, 'payment_date' => now()->toDateString(),
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['amount']);
+    }
+
+    public function test_recording_a_payment_rejects_a_negative_or_zero_amount(): void
+    {
+        $purchase = Purchase::factory()->create(['total_amount' => 100]);
+
+        $negative = $this->postJson('/api/payments', [
+            'payable_type' => 'purchase', 'payable_id' => $purchase->id,
+            'amount' => -10, 'payment_date' => now()->toDateString(),
+        ]);
+        $negative->assertStatus(422);
+        $negative->assertJsonValidationErrors(['amount']);
+
+        $zero = $this->postJson('/api/payments', [
+            'payable_type' => 'purchase', 'payable_id' => $purchase->id,
+            'amount' => 0, 'payment_date' => now()->toDateString(),
+        ]);
+        $zero->assertStatus(422);
+        $zero->assertJsonValidationErrors(['amount']);
+    }
+
+    public function test_the_payments_list_filter_and_search_combine_correctly(): void
+    {
+        $purchase = Purchase::factory()->create(['reference' => 'PO-COMBO', 'total_amount' => 100]);
+        $otherPurchase = Purchase::factory()->create(['reference' => 'PO-OTHER', 'total_amount' => 100]);
+        $salesOrder = SalesOrder::factory()->create(['reference' => 'SO-COMBO', 'total_amount' => 100]);
+
+        $match = Payment::factory()->for($purchase, 'payable')->create(['reference' => 'TXN-A']);
+        Payment::factory()->for($salesOrder, 'payable')->create(['reference' => 'TXN-B']); // right search term, wrong type
+        Payment::factory()->for($otherPurchase, 'payable')->create(['reference' => 'TXN-C']); // right type, wrong search term
+
+        $response = $this->getJson('/api/payments?payable_type=purchase&search=COMBO');
+
+        $response->assertStatus(200);
+        $response->assertJsonCount(1, 'data');
+        $response->assertJsonPath('data.0.id', $match->id);
+    }
+
     public function test_recording_a_payment_rejects_an_invalid_payable_type(): void
     {
         $purchase = Purchase::factory()->create();
