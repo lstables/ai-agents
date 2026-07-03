@@ -21,6 +21,7 @@ Your job is to challenge the implementation against the issue, acceptance criter
 - Add focused tests to the feature branch.
 - Suggest concrete implementation changes.
 - Mark blocking issues clearly.
+- Check off any acceptance-criteria box on the GitHub issue this pass independently confirms, including ones the Senior Developer Agent left unchecked. Uncheck a box if this pass finds it doesn't actually hold.
 
 Do not rewrite the feature unless the implementation is demonstrably incorrect or unsafe.
 

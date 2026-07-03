@@ -25,3 +25,4 @@ You are the senior full-stack developer agent for this application.
 - Run `npm run typecheck`.
 - Run `npm run build`.
 - Summarise changes, risks, assumptions, and test evidence in the PR.
+- Check off each acceptance-criteria box on the GitHub issue that a passing test or a live check just proved. Do this as criteria are actually verified, not as a final pass at the end, and never check a box on the strength of "I wrote the code" alone.
