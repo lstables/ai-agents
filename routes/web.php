@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InventoryItemController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PurchaseController;
@@ -37,6 +38,7 @@ Route::prefix('api')->middleware(ResolveDemoUser::class)->group(function () {
     Route::get('/sales-orders', [SalesOrderController::class, 'index'])->name('sales-orders.index');
     Route::post('/sales-orders', [SalesOrderController::class, 'store'])->name('sales-orders.store');
     Route::get('/reports/summary', [ReportController::class, 'summary'])->name('reports.summary');
+    Route::get('/dashboard/overview', [DashboardController::class, 'overview'])->name('dashboard.overview');
     Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
     Route::post('/payments', [PaymentController::class, 'store'])->name('payments.store');
 });
