@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 #[Fillable(['customer_id', 'created_by', 'reference', 'status', 'order_date', 'expected_date', 'notes', 'total_amount'])]
 class SalesOrder extends Model
@@ -72,5 +73,30 @@ class SalesOrder extends Model
     public function items(): HasMany
     {
         return $this->hasMany(SalesOrderItem::class);
+    }
+
+    /**
+     * @return MorphMany<Payment, $this>
+     */
+    public function payments(): MorphMany
+    {
+        return $this->morphMany(Payment::class, 'payable');
+    }
+
+    /**
+     * Runs a live sum query rather than relying on an eager-loaded
+     * aggregate. Deliberately simple for now — this means one query per
+     * row when serializing a paginated list, accepted the same way
+     * Reports' aggregation queries were: fine at this app's data volume,
+     * worth revisiting if that changes.
+     */
+    public function amountPaid(): float
+    {
+        return round((float) $this->payments()->sum('amount'), 2);
+    }
+
+    public function balanceDue(): float
+    {
+        return max(0, round((float) $this->total_amount - $this->amountPaid(), 2));
     }
 }
