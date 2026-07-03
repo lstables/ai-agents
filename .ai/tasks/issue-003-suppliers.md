@@ -33,6 +33,7 @@ Implemented on branch `feature/issue-2-suppliers`, based on the unmerged `featur
 ## Assumptions
 
 - No roles/permissions are defined (per the issue), matching the existing `PurchasePolicy` stance: any authenticated user may create/update/delete suppliers.
+- **Update (post-implementation):** per explicit human direction, this demo app has no login UI and authentication was removed entirely — see `.ai/tasks/issue-001-purchasing-module.md`'s `ResolveDemoUser` note. Every request to `/api/suppliers*` is resolved as a single demo user; there is no unauthenticated case left to test or reject.
 - `/api/suppliers` becomes paginated (mirroring `/api/purchases`) with a generous default `per_page` so the existing Purchasing dropdown/filter (which requests it unpaginated today) keeps working without changes beyond requesting a larger page size.
 - Deleting a supplier with existing purchases is rejected (422) rather than cascading, since `purchases.supplier_id` is a `restrictOnDelete` foreign key — this preserves purchase history.
 - "Update the supplier list of purchasing page" is satisfied structurally: the Purchasing page already fetches suppliers fresh each time it mounts, so navigating away to Suppliers and back reflects any changes without extra wiring.
