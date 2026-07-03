@@ -33,6 +33,7 @@ class UpdateInventoryItemRequest extends FormRequest
             'quantity_on_hand' => ['required', 'integer', 'min:0'],
             'reorder_level' => ['nullable', 'integer', 'min:0'],
             'unit' => ['nullable', 'string', 'max:50'],
+            'supplier_id' => ['nullable', 'integer', 'exists:suppliers,id'],
         ];
     }
 }

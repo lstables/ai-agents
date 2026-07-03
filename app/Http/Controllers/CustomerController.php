@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
+use Illuminate\Validation\ValidationException;
 
 class CustomerController extends Controller
 {
@@ -60,13 +61,17 @@ class CustomerController extends Controller
     }
 
     /**
-     * Delete a customer. Nothing else in this codebase references
-     * Customer yet, so no data-integrity guard is needed here today
-     * (see .ai/tasks/issue-007-customers-module.md's Assumptions).
+     * Delete a customer, unless it has existing sales orders.
      */
     public function destroy(Customer $customer): Response
     {
         $this->authorize('delete', $customer);
+
+        if ($customer->salesOrders()->exists()) {
+            throw ValidationException::withMessages([
+                'customer' => 'This customer has existing sales orders and cannot be deleted.',
+            ]);
+        }
 
         $customer->delete();
 

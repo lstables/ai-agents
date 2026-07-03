@@ -24,6 +24,7 @@ class InventoryItemController extends Controller
         $perPage = min(max($perPage, 1), 100);
 
         $items = InventoryItem::query()
+            ->with('supplier')
             ->when($request->boolean('below_reorder_level'), function ($query) {
                 $query->belowReorderLevel();
             })
@@ -49,7 +50,7 @@ class InventoryItemController extends Controller
     {
         $item = InventoryItem::create($request->validated());
 
-        return (new InventoryItemResource($item))->response()->setStatusCode(201);
+        return (new InventoryItemResource($item->load('supplier')))->response()->setStatusCode(201);
     }
 
     /**
@@ -59,7 +60,7 @@ class InventoryItemController extends Controller
     {
         $inventoryItem->update($request->validated());
 
-        return new InventoryItemResource($inventoryItem);
+        return new InventoryItemResource($inventoryItem->load('supplier'));
     }
 
     /**
