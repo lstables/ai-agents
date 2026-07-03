@@ -27,6 +27,8 @@ export type SalesOrder = {
     expected_date: string | null;
     notes: string | null;
     total_amount: number;
+    amount_paid: number;
+    balance_due: number;
     customer: Customer | null;
     items: SalesOrderItem[];
     created_at: string | null;

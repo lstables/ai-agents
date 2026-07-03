@@ -25,6 +25,8 @@ export type Purchase = {
     expected_date: string | null;
     notes: string | null;
     total_amount: number;
+    amount_paid: number;
+    balance_due: number;
     supplier: Supplier | null;
     items: PurchaseItem[];
     created_at: string | null;

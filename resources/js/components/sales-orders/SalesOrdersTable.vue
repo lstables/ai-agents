@@ -110,6 +110,7 @@ function goToPage(page: number) {
                         <th class="px-5 py-3">Status</th>
                         <th class="px-5 py-3">Order date</th>
                         <th class="px-5 py-3 text-right">Total</th>
+                        <th class="px-5 py-3 text-right">Balance due</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-zinc-100">
@@ -122,6 +123,9 @@ function goToPage(page: number) {
                         <td class="px-5 py-3 text-zinc-700">{{ salesOrder.order_date }}</td>
                         <td class="px-5 py-3 text-right font-semibold text-zinc-900">
                             {{ salesOrder.total_amount.toFixed(2) }}
+                        </td>
+                        <td class="px-5 py-3 text-right" :class="salesOrder.balance_due > 0 ? 'font-semibold text-amber-700' : 'text-emerald-700'">
+                            {{ salesOrder.balance_due.toFixed(2) }}
                         </td>
                     </tr>
                 </tbody>
