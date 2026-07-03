@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\InventoryItemController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Middleware\ResolveDemoUser;
@@ -21,4 +22,8 @@ Route::prefix('api')->middleware(ResolveDemoUser::class)->group(function () {
     Route::post('/suppliers', [SupplierController::class, 'store'])->name('suppliers.store');
     Route::put('/suppliers/{supplier}', [SupplierController::class, 'update'])->name('suppliers.update');
     Route::delete('/suppliers/{supplier}', [SupplierController::class, 'destroy'])->name('suppliers.destroy');
+    Route::get('/inventory-items', [InventoryItemController::class, 'index'])->name('inventory-items.index');
+    Route::post('/inventory-items', [InventoryItemController::class, 'store'])->name('inventory-items.store');
+    Route::put('/inventory-items/{inventory_item}', [InventoryItemController::class, 'update'])->name('inventory-items.update');
+    Route::delete('/inventory-items/{inventory_item}', [InventoryItemController::class, 'destroy'])->name('inventory-items.destroy');
 });
