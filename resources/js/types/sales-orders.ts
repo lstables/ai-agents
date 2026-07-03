@@ -23,6 +23,7 @@ export type SalesOrder = {
     id: number;
     reference: string;
     status: SalesOrderStatus;
+    allowed_next_statuses: SalesOrderStatus[];
     order_date: string;
     expected_date: string | null;
     notes: string | null;

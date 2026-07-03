@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Purchases\CreatePurchase;
+use App\Actions\Purchases\UpdatePurchaseStatus;
 use App\Http\Requests\StorePurchaseRequest;
+use App\Http\Requests\UpdatePurchaseStatusRequest;
 use App\Http\Resources\PurchaseResource;
 use App\Models\Purchase;
 use Illuminate\Http\JsonResponse;
@@ -58,5 +60,16 @@ class PurchaseController extends Controller
         return (new PurchaseResource($purchase))
             ->response()
             ->setStatusCode(201);
+    }
+
+    /**
+     * Move a purchase to a new status. Authorization uses the same
+     * `update` policy method already defined on PurchasePolicy.
+     */
+    public function updateStatus(UpdatePurchaseStatusRequest $request, Purchase $purchase, UpdatePurchaseStatus $updatePurchaseStatus): PurchaseResource
+    {
+        $updated = $updatePurchaseStatus->handle($purchase, $request->validated('status'));
+
+        return new PurchaseResource($updated);
     }
 }

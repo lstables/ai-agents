@@ -1,6 +1,6 @@
 import { apiRequest } from './client';
 import { fetchAllSuppliers } from './suppliers';
-import type { NewPurchaseInput, PaginatedResponse, Purchase, PurchaseFilters, Supplier } from '../types/purchases';
+import type { NewPurchaseInput, PaginatedResponse, Purchase, PurchaseFilters, PurchaseStatus, Supplier } from '../types/purchases';
 
 function buildQuery(filters: PurchaseFilters): string {
     const params = new URLSearchParams();
@@ -45,4 +45,11 @@ export function createPurchase(input: NewPurchaseInput): Promise<{ data: Purchas
 
 export function fetchSuppliers(): Promise<{ data: Supplier[] }> {
     return fetchAllSuppliers();
+}
+
+export function updatePurchaseStatus(id: number, status: PurchaseStatus): Promise<{ data: Purchase }> {
+    return apiRequest<{ data: Purchase }>(`/api/purchases/${id}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+    });
 }

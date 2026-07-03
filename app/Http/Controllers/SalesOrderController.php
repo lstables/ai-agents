@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Actions\SalesOrders\CreateSalesOrder;
+use App\Actions\SalesOrders\UpdateSalesOrderStatus;
 use App\Http\Requests\StoreSalesOrderRequest;
+use App\Http\Requests\UpdateSalesOrderStatusRequest;
 use App\Http\Resources\SalesOrderResource;
 use App\Models\SalesOrder;
 use Illuminate\Http\JsonResponse;
@@ -58,5 +60,16 @@ class SalesOrderController extends Controller
         return (new SalesOrderResource($salesOrder))
             ->response()
             ->setStatusCode(201);
+    }
+
+    /**
+     * Move a sales order to a new status. Authorization uses the same
+     * `update` policy method already defined on SalesOrderPolicy.
+     */
+    public function updateStatus(UpdateSalesOrderStatusRequest $request, SalesOrder $salesOrder, UpdateSalesOrderStatus $updateSalesOrderStatus): SalesOrderResource
+    {
+        $updated = $updateSalesOrderStatus->handle($salesOrder, $request->validated('status'));
+
+        return new SalesOrderResource($updated);
     }
 }
