@@ -71,3 +71,95 @@ Then configure branch protection for `main`:
 - Human 1: business workflow approval
 - Human 2: technical/code quality approval
 - Human 3: QA/support/rollout approval
+
+
+## Examples
+
+Simply use `Build <feature> using the feature-delivery playbook. Create/use a GitHub issue, open a PR, run QA and reviewer passes, but do not merge.` or Shorter `Build <feature> using the feature-delivery playbook. Do not merge.`
+
+Or use each agent individually:
+
+Run the Team Lead Agent to write out a plan
+
+Use .ai/agents/team-lead.md and .ai/guidelines/*.
+
+Read GitHub issue #:
+https://github.com/lstables/ai-agents/issues/
+
+Create or update .ai/tasks/issue-#.md.
+
+Break the work into:
+- Laravel models/migrations
+- routes/controllers/requests
+- Vue/TypeScript screens/components
+- create form
+- table with pagination, filtering, and search
+- tests
+- QA checks
+- reviewer checks
+
+Do not implement the feature yet. Only create the task plan.
+
+---
+
+Run the Developer Agent to write what was planned
+
+Use .ai/agents/senior-developer.md, .ai/guidelines/*, and .ai/tasks/issue-#.md.
+
+Implement GitHub issue #.
+
+Create a new branch:
+feature/issue-#
+
+Build the Purchasing module:
+- migration/model for purchases
+- create form
+- index table
+- pagination
+- filtering
+- search
+- Laravel validation
+- tests for the feature
+
+Run:
+composer test
+npm run typecheck
+npm run build
+
+Commit the work and open a pull request against main.
+
+---
+
+Run the QA Agent to check work carried out
+
+Use .ai/agents/qa-agent.md and .ai/guidelines/*.
+
+Review PR #<number> against GitHub issue # and .ai/tasks/issue-#.md.
+
+Check:
+- creation works
+- validation is covered
+- table search/filter/pagination works
+- tests back up the feature
+- no obvious regression risk
+
+Add missing tests if needed.
+Report blocking issues and residual risk.
+
+---
+
+Run the Reviewer Agent
+
+Use .ai/agents/github-reviewer.md and .ai/guidelines/*.
+
+Review PR #<number> as the GitHub reviewer agent.
+
+Only comment on:
+- bugs
+- missing tests
+- Laravel/Vue convention problems
+- data integrity risks
+- security issues
+- maintainability problems
+
+Use P0/P1/P2/P3 severity.

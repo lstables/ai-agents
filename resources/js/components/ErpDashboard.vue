@@ -4,6 +4,7 @@ import DashboardHome from './DashboardHome.vue';
 import PurchasesPage from './purchases/PurchasesPage.vue';
 import SuppliersPage from './suppliers/SuppliersPage.vue';
 import InventoryPage from './inventory/InventoryPage.vue';
+import CustomersPage from './customers/CustomersPage.vue';
 
 const modules = [
     'Purchasing',
@@ -75,6 +76,7 @@ function showDashboard() {
                     <PurchasesPage v-else-if="activeModule === 'Purchasing'" />
                     <SuppliersPage v-else-if="activeModule === 'Suppliers'" />
                     <InventoryPage v-else-if="activeModule === 'Inventory'" />
+                    <CustomersPage v-else-if="activeModule === 'Customers'" />
                     <div v-else class="rounded-lg border border-dashed border-zinc-300 bg-white p-8 text-center text-sm text-zinc-500">
                         {{ activeModule }} has not been built yet.
                     </div>

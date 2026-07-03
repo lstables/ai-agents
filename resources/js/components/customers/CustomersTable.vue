@@ -1,0 +1,173 @@
+<script setup lang="ts">
+import { onMounted, reactive, ref, watch } from 'vue';
+import { deleteCustomer, fetchCustomers } from '../../api/customers';
+import { ApiError } from '../../api/client';
+import type { PaginationMeta } from '../../types/purchases';
+import type { Customer, CustomerFilters } from '../../types/customers';
+
+const props = defineProps<{ refreshToken: number }>();
+const emit = defineEmits<{ edit: [customer: Customer] }>();
+
+const customers = ref<Customer[]>([]);
+const meta = ref<PaginationMeta | null>(null);
+const loadState = ref<'loading' | 'ready' | 'error'>('loading');
+const errorMessage = ref('');
+const deletingId = ref<number | null>(null);
+const deleteError = ref('');
+
+const filters = reactive<CustomerFilters>({
+    search: '',
+    page: 1,
+    perPage: 10,
+});
+
+let searchDebounce: ReturnType<typeof setTimeout> | undefined;
+
+async function load() {
+    loadState.value = 'loading';
+    errorMessage.value = '';
+
+    try {
+        const response = await fetchCustomers(filters);
+        customers.value = response.data;
+        meta.value = response.meta;
+        loadState.value = 'ready';
+    } catch (error) {
+        loadState.value = 'error';
+        errorMessage.value = error instanceof Error ? error.message : 'Could not load customers.';
+    }
+}
+
+onMounted(load);
+
+watch(() => props.refreshToken, load);
+watch(() => filters.search, () => {
+    filters.page = 1;
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(load, 300);
+});
+
+function goToPage(page: number) {
+    if (!meta.value || page < 1 || page > meta.value.last_page) {
+        return;
+    }
+
+    filters.page = page;
+    load();
+}
+
+async function remove(customer: Customer) {
+    if (!confirm(`Delete customer "${customer.name}"? This cannot be undone.`)) {
+        return;
+    }
+
+    deletingId.value = customer.id;
+    deleteError.value = '';
+
+    try {
+        await deleteCustomer(customer.id);
+        await load();
+    } catch (error) {
+        deleteError.value = error instanceof ApiError || error instanceof Error
+            ? error.message
+            : 'Could not delete this customer.';
+    } finally {
+        deletingId.value = null;
+    }
+}
+</script>
+
+<template>
+    <div class="rounded-lg border border-zinc-200 bg-white shadow-sm">
+        <div class="flex flex-col gap-3 border-b border-zinc-200 px-5 py-4 md:flex-row md:items-center md:justify-between">
+            <h3 class="text-lg font-bold text-zinc-950">Customers</h3>
+
+            <input
+                v-model="filters.search"
+                type="search"
+                placeholder="Search name or email"
+                class="rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            >
+        </div>
+
+        <div v-if="deleteError" class="border-b border-rose-200 bg-rose-50 px-5 py-2 text-sm text-rose-800">
+            {{ deleteError }}
+        </div>
+
+        <div v-if="loadState === 'loading'" class="px-5 py-8 text-center text-sm text-zinc-500">
+            Loading customers…
+        </div>
+
+        <div v-else-if="loadState === 'error'" class="px-5 py-8 text-center text-sm text-rose-700">
+            {{ errorMessage }}
+        </div>
+
+        <div v-else-if="customers.length === 0" class="px-5 py-8 text-center text-sm text-zinc-500">
+            No customers match this search.
+        </div>
+
+        <div v-else class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+                <thead class="border-b border-zinc-200 text-xs font-semibold uppercase tracking-normal text-zinc-500">
+                    <tr>
+                        <th class="px-5 py-3">Name</th>
+                        <th class="px-5 py-3">Email</th>
+                        <th class="px-5 py-3">Phone</th>
+                        <th class="px-5 py-3 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-zinc-100">
+                    <tr v-for="customer in customers" :key="customer.id">
+                        <td class="px-5 py-3 font-semibold text-zinc-900">{{ customer.name }}</td>
+                        <td class="px-5 py-3 text-zinc-700">{{ customer.email ?? '—' }}</td>
+                        <td class="px-5 py-3 text-zinc-700">{{ customer.phone ?? '—' }}</td>
+                        <td class="px-5 py-3 text-right">
+                            <div class="flex justify-end gap-2">
+                                <button
+                                    type="button"
+                                    class="rounded-md border border-zinc-300 px-3 py-1 text-xs font-semibold text-zinc-700 hover:bg-zinc-50"
+                                    @click="emit('edit', customer)"
+                                >
+                                    Edit
+                                </button>
+                                <button
+                                    type="button"
+                                    class="rounded-md border border-rose-200 px-3 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-50"
+                                    :disabled="deletingId === customer.id"
+                                    @click="remove(customer)"
+                                >
+                                    {{ deletingId === customer.id ? 'Deleting…' : 'Delete' }}
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div
+            v-if="meta && meta.last_page > 1"
+            class="flex items-center justify-between border-t border-zinc-200 px-5 py-3 text-sm text-zinc-600"
+        >
+            <span>Page {{ meta.current_page }} of {{ meta.last_page }} ({{ meta.total }} total)</span>
+            <div class="flex gap-2">
+                <button
+                    type="button"
+                    class="rounded-md border border-zinc-300 px-3 py-1 font-semibold hover:bg-zinc-50 disabled:opacity-40"
+                    :disabled="meta.current_page <= 1"
+                    @click="goToPage(meta.current_page - 1)"
+                >
+                    Previous
+                </button>
+                <button
+                    type="button"
+                    class="rounded-md border border-zinc-300 px-3 py-1 font-semibold hover:bg-zinc-50 disabled:opacity-40"
+                    :disabled="meta.current_page >= meta.last_page"
+                    @click="goToPage(meta.current_page + 1)"
+                >
+                    Next
+                </button>
+            </div>
+        </div>
+    </div>
+</template>
